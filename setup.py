@@ -4,7 +4,7 @@ with open('README.md', 'r') as readme_file:
 	long_description = readme_file.read()
 
 setuptools.setup(
-	name='MinecraftBridge',
+	name='RedisBridge',
 	version='0.1',
 	author='Ini Oguntola',
 	author_email='ioguntol@andrew.cmu.edu',
