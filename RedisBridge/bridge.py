@@ -1,5 +1,4 @@
 import redis
-import threading
 
 
 
@@ -36,11 +35,19 @@ class RedisBridge:
     >>> bridge.stop()
     """
 
-    def __init__(self, name='RedisBridge', host='localhost', port=6379):
+    def __init__(self, name='RedisBridge', host='localhost', port=6379, db=0):
         self.connection = redis.Redis(host='localhost', port=6379, db=0)
         self.pubsub = self.connection.pubsub(ignore_subscribe_messages=True)
-        self.observers = {}
         self.thread = None
+
+        self.name = name
+        self.observers = {}
+
+        # Set client pubsub hard / soft output buffer limits
+        # 1 GB hard limit, 64 MB per 60 seconds soft limit
+        self.connection.config_set(
+            'client-output-buffer-limit', 
+            f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 30} {2 ** 26} 60')
 
 
     def subscribe(self, channel):
@@ -108,8 +115,9 @@ class RedisBridge:
                 which may be decoded or unpickled by clients as needed.
         """
         message['channel'] = message['channel'].decode() # convert channel to string
-        for observer in self.observers[message['channel']]:
-            observer.receive(message)
+        if message['channel'] in self.observers.keys():
+            for observer in self.observers[message['channel']]:
+                observer.receive(message)
 
 
     def start(self, sleep_time=0):
@@ -120,15 +128,23 @@ class RedisBridge:
         Arguments:
             sleep_time: number of seconds to time.sleep() per loop iteration
         """
-        self.thread = self.pubsub.run_in_thread(sleep_time=sleep_time)
+        if self.pubsub.connection is None:
+            print("Can't start RedisBridge, as it is not currently subscribed to any channels.")
+        else:
+            self.thread = self.pubsub.run_in_thread(sleep_time=sleep_time)
 
 
-    def stop(self):
+    def stop(self, timeout=1.0):
         """
         Stop receiving messages from the Redis connection.
+
+        Arguments:
+            - timeout: seconds before background thread timeout 
         """
         self.thread.stop()
-        self.thread.join()
+        self.thread.join(timeout=timeout)
+        self.pubsub.close()
+        self.connection.flushdb()
 
 
     def send(self, data, channel, should_pickle=False):
