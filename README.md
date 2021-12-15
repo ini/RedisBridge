@@ -14,7 +14,11 @@ This package also requires a running Redis server. See [Redis's quickstart](http
 
 The RedisBridge package can be installed via `pip`.  This can be done from the root folder of the package with the following command:
 
-```pip install --user -e .```
+```git clone https://gitlab.com/cmu_asist/RedisBridge```
+
+```cd RedisBridge```
+
+```pip install [--user] -e .```
 
 ## Example Usage
 
