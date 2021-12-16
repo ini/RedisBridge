@@ -28,7 +28,7 @@ The RedisBridge package can be installed via `pip`.  This can be done from the r
 >>> bridge = RedisBridge(host='localhost', port=6379)
 ```
 
-2. Create clients, which need to implement `client.receive(message)`
+2. Create clients, which need to implement `client.receive_redis(message)`
 
 ```
 >>> client1 = MyClient()

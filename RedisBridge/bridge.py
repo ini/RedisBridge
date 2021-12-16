@@ -12,7 +12,7 @@ class RedisBridge:
 
     >>> bridge = RedisBridge(host='localhost', port=6379)
 
-    2. Create clients (that implement `receive(message)`)
+    2. Create clients (that implement `receive_redis(message)`)
 
     >>> client1 = MyClient()
     >>> client2 = MyOtherClient()
@@ -57,7 +57,7 @@ class RedisBridge:
         Arguments:
             - channel: the name of the channel
         """
-        self.pubsub.subscribe(**{channel: self.receive})
+        self.pubsub.subscribe(**{channel: self.receive_redis})
 
 
     def register(self, observer, channel):
@@ -105,9 +105,9 @@ class RedisBridge:
                 self.pubsub.unsubscribe(c)
 
 
-    def receive(self, message):
+    def receive_redis(self, message):
         """
-        Forward a message to relevant observers (via `observer.receive(message)`).
+        Forward a message to relevant observers (via `observer.receive_redis(message)`).
 
         Arguments:
             - message: dictionary representing the recived message.
@@ -117,7 +117,7 @@ class RedisBridge:
         message['channel'] = message['channel'].decode() # convert channel to string
         if message['channel'] in self.observers.keys():
             for observer in self.observers[message['channel']]:
-                observer.receive(message)
+                observer.receive_redis(message)
 
 
     def start(self, sleep_time=0):
