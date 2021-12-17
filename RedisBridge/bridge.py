@@ -56,7 +56,7 @@ class RedisBridge:
         else:
             self.logger = logging.getLogger(__name__)
         
-        self.logger.info(f"{self}:  Connected to Redis at host={host}, port={port}, db={db}')
+        self.logger.info(f"{self}:  Connected to Redis at host={host}, port={port}, db={db}")
 
 
     def __str__(self):
@@ -76,7 +76,7 @@ class RedisBridge:
         Arguments:
             - channel: the name of the channel
         """
-        self.logger.info(f"{self}:  Subscribing to {topic}")
+        self.logger.info(f"{self}:  Subscribing to channel '{channel}'")
         self.pubsub.subscribe(**{channel: self.on_message})
 
 
