@@ -1,3 +1,4 @@
+import logging
 import redis
 
 
@@ -35,8 +36,8 @@ class RedisBridge:
     >>> bridge.stop()
     """
 
-    def __init__(self, name='RedisBridge', host='localhost', port=6379, db=0):
-        self.connection = redis.Redis(host='localhost', port=6379, db=0)
+    def __init__(self, name=None, host='localhost', port=6379, db=0):
+        self.connection = redis.Redis(host='localhost', port=6379, db=0, health_check_interval=1)
         self.pubsub = self.connection.pubsub(ignore_subscribe_messages=True)
         self.thread = None
 
@@ -49,6 +50,24 @@ class RedisBridge:
             'client-output-buffer-limit', 
             f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 30} {2 ** 26} 60')
 
+        # Grab a handle to logger for the class, if it exists, else the default logger
+        if self.__class__.__name__ in logging.Logger.manager.loggerDict:
+            self.logger = logging.getLogger(self.__class__.__name__)
+        else:
+            self.logger = logging.getLogger(__name__)
+        
+        self.logger.info(f"{self}:  Connected to Redis at host={host}, port={port}, db={db}')
+
+
+    def __str__(self):
+        """
+        Return a string representation of the object.
+        """
+        if self.name:
+            return f"[{self.__class__.__name__} - {self.name}]"
+        else:
+            return f"[{self.__class__.__name__}]"
+
 
     def subscribe(self, channel):
         """
@@ -57,7 +76,8 @@ class RedisBridge:
         Arguments:
             - channel: the name of the channel
         """
-        self.pubsub.subscribe(**{channel: self.receive_redis})
+        self.logger.info(f"{self}:  Subscribing to {topic}")
+        self.pubsub.subscribe(**{channel: self.on_message})
 
 
     def register(self, observer, channel):
@@ -70,6 +90,8 @@ class RedisBridge:
             - observer: client object to receive messages
             - channel: the name of the channel on which the client should receive
         """
+        self.logger.debug(f"{self}:  Registering {observer} to receive messages on channel '{channel}'")
+
         if not channel in self.observers.keys():
             self.subscribe(channel)
             self.observers[channel] = set()
@@ -93,21 +115,25 @@ class RedisBridge:
         if channel is None:
             for c in self.observers.keys():
                 if observer in self.observers[c]:
+                    self.logger.debug(f"{self}:  Deregistering {observer} from channel '{c}'")
                     self.observers[c].remove(observer)
 
         # Deregister observer from given channel
         else:
+            self.logger.debug(f"{self}:  Deregistering {observer} from channel '{channel}'")
             self.observers[channel].remove(observer)
 
         # Unsuscribe to any channels that no longer have any observers
         for c in self.observers.keys():
             if len(self.observers[c]) == 0:
+                self.logger.info(f"{self}:  Unsubscribing from channel '{c}' -- no registered listeners")
                 self.pubsub.unsubscribe(c)
 
 
-    def receive_redis(self, message):
+    def on_message(self, message):
         """
-        Forward a message to relevant observers (via `observer.receive_redis(message)`).
+        Callback when the bridge receives a message from Redis.
+        Forwards a message to relevant observers (via `observer.receive_redis(message)`).
 
         Arguments:
             - message: dictionary representing the recived message.
@@ -115,6 +141,8 @@ class RedisBridge:
                 which may be decoded or unpickled by clients as needed.
         """
         message['channel'] = message['channel'].decode() # convert channel to string
+        self.logger.debug(f"{self}:  Received {type(message)} on channel '{message['channel']}'")
+
         if message['channel'] in self.observers.keys():
             for observer in self.observers[message['channel']]:
                 observer.receive_redis(message)
@@ -128,8 +156,9 @@ class RedisBridge:
         Arguments:
             sleep_time: number of seconds to time.sleep() per loop iteration
         """
+        self.logger.info(f"{self}:  Starting callback loop with internal Redis bus")
         if self.pubsub.connection is None:
-            print("Can't start RedisBridge, as it is not currently subscribed to any channels.")
+            self.logger.warning(f"{self}:  Cannot start RedisBridge, as it is not currently subscribed to any channels.")
         else:
             self.thread = self.pubsub.run_in_thread(sleep_time=sleep_time)
 
@@ -141,6 +170,7 @@ class RedisBridge:
         Arguments:
             - timeout: seconds before background thread timeout 
         """
+        self.logger.info(f"{self}:  Stopping callback loop for the internal Redis bus")
         self.thread.stop()
         self.thread.join(timeout=timeout)
         self.pubsub.close()
@@ -161,6 +191,7 @@ class RedisBridge:
             - pickle: boolean indicating whether or not to pickle the data 
                 into bytes before sending; default is False
         """
+        self.logger.debug(f"{self}:  Publishing {type(data)} message on channel {channel}")
         if should_pickle:
             import pickle
             self.connection.publish(channel, pickle.dumps(data))
