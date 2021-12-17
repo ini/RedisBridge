@@ -48,7 +48,7 @@ class RedisBridge:
         # 1 GB hard limit, 64 MB per 60 seconds soft limit
         self.connection.config_set(
             'client-output-buffer-limit', 
-            f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 30} {2 ** 26} 60')
+            f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 32} {2 ** 32} 60')
 
         # Grab a handle to logger for the class, if it exists, else the default logger
         if self.__class__.__name__ in logging.Logger.manager.loggerDict:
@@ -140,12 +140,15 @@ class RedisBridge:
                 The field message['data'] is given as a `bytes` object, 
                 which may be decoded or unpickled by clients as needed.
         """
-        message['channel'] = message['channel'].decode() # convert channel to string
-        self.logger.debug(f"{self}:  Received {type(message)} on channel '{message['channel']}'")
+        self.logger.debug(f"{self}:  Received {message}'")
 
+        message['channel'] = message['channel'].decode() # convert channel to string
         if message['channel'] in self.observers.keys():
             for observer in self.observers[message['channel']]:
-                observer.receive_redis(message)
+                try:
+                    observer.receive_redis(message)
+                except Exception as e:
+                    self.logger.exception(f"{self}:  Error in observer {observer} receiving message - {e}")
 
 
     def start(self, sleep_time=0):
@@ -160,6 +163,7 @@ class RedisBridge:
         if self.pubsub.connection is None:
             self.logger.warning(f"{self}:  Cannot start RedisBridge, as it is not currently subscribed to any channels.")
         else:
+            self.connection.flushdb()
             self.thread = self.pubsub.run_in_thread(sleep_time=sleep_time)
 
 
@@ -191,7 +195,7 @@ class RedisBridge:
             - pickle: boolean indicating whether or not to pickle the data 
                 into bytes before sending; default is False
         """
-        self.logger.debug(f"{self}:  Publishing {type(data)} message on channel {channel}")
+        self.logger.debug(f"{self}:  Publishing {data} on channel {channel}")
         if should_pickle:
             import pickle
             self.connection.publish(channel, pickle.dumps(data))
