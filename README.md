@@ -51,7 +51,7 @@ The RedisBridge package can be installed via `pip`.  This can be done from the r
 5. Messages can be constructed and sent to Redis:
 
 ```
->>> bridge.send(belief_state, 'belief', should_pickle=True)
+>>> bridge.send(belief_state, 'belief')
 ```
 
 6. Stop the bridge to stop receiving messages
