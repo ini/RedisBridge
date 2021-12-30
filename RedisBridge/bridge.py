@@ -204,7 +204,7 @@ class RedisBridge:
                 into bytes before sending; default is False
         """
         self.logger.debug(f"{self}:  Publishing {data} on channel {channel}")
-        if should_pickle:
+        if should_pickle or not isinstance(data, (bytes, str, int, float)):
             self.connection.publish(channel, pickle.dumps(data))
         else:
             self.connection.publish(channel, data)
