@@ -1,4 +1,5 @@
 import logging
+import pickle
 import redis
 
 
@@ -144,6 +145,13 @@ class RedisBridge:
 
         message['channel'] = message['channel'].decode() # convert channel to string
         if message['channel'] in self.observers.keys():
+            # Unpickle message data, if possible
+            try:
+                msg['data'] = pickle.loads(msg['data'])
+            except pickle.UnpicklingError:
+                pass
+
+            # Forward message to relevant observers
             for observer in self.observers[message['channel']]:
                 try:
                     observer.receive_redis(message)
@@ -197,7 +205,6 @@ class RedisBridge:
         """
         self.logger.debug(f"{self}:  Publishing {data} on channel {channel}")
         if should_pickle:
-            import pickle
             self.connection.publish(channel, pickle.dumps(data))
         else:
             self.connection.publish(channel, data)
