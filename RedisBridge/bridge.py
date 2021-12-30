@@ -38,7 +38,7 @@ class RedisBridge:
     """
 
     def __init__(self, name=None, host='localhost', port=6379, db=0):
-        self.connection = redis.Redis(host=host, port=port, db=db, health_check_interval=1)
+        self.connection = redis.Redis(host='localhost', port=6379, db=0, health_check_interval=1)
         self.pubsub = self.connection.pubsub(ignore_subscribe_messages=True)
         self.thread = None
 
@@ -147,7 +147,7 @@ class RedisBridge:
         if message['channel'] in self.observers.keys():
             # Unpickle message data, if possible
             try:
-                msg['data'] = pickle.loads(msg['data'])
+                message['data'] = pickle.loads(message['data'])
             except pickle.UnpicklingError:
                 pass
 
