@@ -5,7 +5,7 @@ with open('README.md', 'r') as readme_file:
 
 setuptools.setup(
 	name='RedisBridge',
-	version='0.1',
+	version='1.0',
 	author='Ini Oguntola',
 	author_email='ioguntol@andrew.cmu.edu',
 	description='Bridge to internal Redis bus',
@@ -18,5 +18,8 @@ setuptools.setup(
 		'License :: OSI Approved :: MIT License',
 		'operating System :: OS Independent',
 	],
-	python_requires='>=3.5',
+	python_requires='>=3.6',
+	install_requires=[
+		'redis>=3',
+	],
 )

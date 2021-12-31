@@ -4,11 +4,7 @@ RedisBridge is a bridge to an internal pub/sub Redis bus.
 
 ## Requirements
 
-This repository requires the `redis-py` package. This is most easily installed through `pip`:
-
-```pip install [--user] redis```
-
-This package also requires a running Redis server. See [Redis's quickstart](https://redis.io/topics/quickstart) for local installation instructions (although this should be already taken care of on ripley).
+This package requires a running Redis server. See [Redis's quickstart](https://redis.io/topics/quickstart) for local installation instructions (although this should be already taken care of on ripley).
 
 ## Installation
 
@@ -18,7 +14,7 @@ The RedisBridge package can be installed via `pip`.  This can be done from the r
 
 ```cd RedisBridge```
 
-```pip install [--user] -e .```
+```pip install -e .```
 
 ## Example Usage
 
@@ -35,7 +31,7 @@ The RedisBridge package can be installed via `pip`.  This can be done from the r
 >>> client2 = MyOtherClient()
 ```
 
-3. Register clients to various channels
+3. Register clients to listen to various channels
 
 ```
 >>> bridge.register(client1, 'belief')
