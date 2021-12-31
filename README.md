@@ -21,6 +21,7 @@ The RedisBridge package can be installed via `pip`.  This can be done from the r
 1. Create a RedisBridge
 
 ```
+>>> from RedisBridge import RedisBridge
 >>> bridge = RedisBridge(host='localhost', port=6379)
 ```
 
