@@ -143,7 +143,9 @@ class RedisBridge:
         """
         self.logger.debug(f"{self}:  Received {message}'")
 
+        del message['pattern'] # delete unused pattern key, for simplicity
         message['channel'] = message['channel'].decode() # convert channel to string
+
         if message['channel'] in self.observers.keys():
             # Unpickle message data, if possible
             try:
