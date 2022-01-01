@@ -12,7 +12,7 @@ setuptools.setup(
 	long_description=long_description,
 	long_description_content_type='text/markdown',
 	url='https://gitlab.com/cmu_asist/RedisBridge',
-	packages=setuptools.find_packages(include=['RedisBridge']),
+	packages=setuptools.find_packages(),
 	classifiers=[
 		'Programming Language :: Python :: 3',
 		'License :: OSI Approved :: MIT License',
