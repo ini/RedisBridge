@@ -37,19 +37,35 @@ class RedisBridge:
     >>> bridge.stop()
     """
 
-    def __init__(self, name=None, host='localhost', port=6379, db=0):
-        self.connection = redis.Redis(host='localhost', port=6379, db=0, health_check_interval=1)
+    def __init__(self, 
+        name=None, dummy_redis_server=False, host='localhost', port=6379, db=0):
+        """
+        Arguments:
+            - name: the name of this RedisBridge
+            - dummy_redis_server: boolean indicating whether or not to use a dummy Redis connection
+                that simulates talking to a Redis server by storing state internally
+            - host: host of the Redis server
+            - port: port for the Redis server
+            - db: database index to use with the Redis server
+        """
+        if dummy_redis_server:
+            import fakeredis
+            self.connection = fakeredis.FakeRedis(host=host, port=port, db=db, health_check_interval=1)
+        else:
+            self.connection = redis.Redis(host=host, port=port, db=db, health_check_interval=1)
+        
         self.pubsub = self.connection.pubsub(ignore_subscribe_messages=True)
         self.thread = None
 
         self.name = name
         self.observers = {}
 
-        # Set client pubsub hard / soft output buffer limits
-        # 1 GB hard limit, 64 MB per 60 seconds soft limit
-        self.connection.config_set(
-            'client-output-buffer-limit', 
-            f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 32} {2 ** 32} 60')
+        if not dummy_redis_server:
+            # Set client pubsub hard / soft output buffer limits
+            # 1 GB hard limit, 64 MB per 60 seconds soft limit
+            self.connection.config_set(
+                'client-output-buffer-limit', 
+                f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 32} {2 ** 32} 60')
 
         # Grab a handle to logger for the class, if it exists, else the default logger
         if self.__class__.__name__ in logging.Logger.manager.loggerDict:
@@ -57,7 +73,10 @@ class RedisBridge:
         else:
             self.logger = logging.getLogger(__name__)
         
-        self.logger.info(f"{self}:  Connected to Redis at host={host}, port={port}, db={db}")
+        if dummy_redis_server:
+            self.logger.info(f"{self}:  Connected to dummy Redis server.")
+        else:
+            self.logger.info(f"{self}:  Connected to Redis at host={host}, port={port}, db={db}")
 
 
     def __str__(self):
