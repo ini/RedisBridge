@@ -21,5 +21,6 @@ setuptools.setup(
 	python_requires='>=3.6',
 	install_requires=[
 		'redis>=3',
+		'fakeredis',
 	],
 )
