@@ -2,6 +2,8 @@ import logging
 import pickle
 import redis
 
+from .messages import Message, Request, Response
+
 
 
 class RedisBridge:
@@ -59,6 +61,7 @@ class RedisBridge:
 
         self.name = name
         self.observers = {}
+        self.requests = {}
 
         if not dummy_redis_server:
             # Set client pubsub hard / soft output buffer limits
@@ -160,19 +163,11 @@ class RedisBridge:
                 The field message['data'] is given as a `bytes` object, 
                 which may be decoded or unpickled by clients as needed.
         """
+        message = Message.from_redis(message)
         self.logger.debug(f"{self}:  Received {message}'")
 
-        del message['pattern'] # delete unused pattern key, for simplicity
-        message['channel'] = message['channel'].decode() # convert channel to string
-
+        # Forward message to relevant observers
         if message['channel'] in self.observers.keys():
-            # Unpickle message data, if possible
-            try:
-                message['data'] = pickle.loads(message['data'])
-            except pickle.UnpicklingError:
-                pass
-
-            # Forward message to relevant observers
             for observer in self.observers[message['channel']]:
                 try:
                     observer.receive_redis(message)
@@ -210,7 +205,7 @@ class RedisBridge:
         self.connection.flushdb()
 
 
-    def send(self, data, channel, should_pickle=False):
+    def send(self, data, channel, is_request=False, response_to=None):
         """
         Send a message with the provided on the given channel 
         through the Redis connection.
@@ -221,12 +216,21 @@ class RedisBridge:
                 Pickleable object types can be converted to bytes 
                 via the optional `should_pickle` argument. 
             - channel: the channel on which to publish the message
-            - pickle: boolean indicating whether or not to pickle the data 
-                into bytes before sending; default is False
+
+        Returns:
+            - id: the unique string identifier for the sent message
         """
         self.logger.debug(f"{self}:  Publishing {data} on channel {channel}")
-        if should_pickle or not isinstance(data, (bytes, str, int, float)):
-            self.connection.publish(channel, pickle.dumps(data))
+
+        if is_request:
+            msg = Request(channel, data)
+
+        elif response_to is not None:
+            msg = Response(channel, data, request_id=response_to)
+
         else:
-            self.connection.publish(channel, data)
+            msg = Message(channel, data)
+
+        self.connection.publish(channel, pickle.dumps(msg))
+        return msg.id
 
