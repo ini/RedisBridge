@@ -16,6 +16,10 @@ The RedisBridge package can be installed via `pip`.  This can be done from the r
 
 ```pip install -e .```
 
+## Demos
+
+Check out the [`demos`](./demos/) directory.
+
 ## Example Usage
 
 1. Create a RedisBridge
@@ -62,3 +66,7 @@ If we wanted to run locally and were unable to run a Redis server on the machine
 ```
 >>> bridge.stop()
 ```
+
+## Docs
+
+[`RedisBridge.messages`](./RedisBridge/messages/)
