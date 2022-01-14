@@ -47,7 +47,6 @@ To send a response, set the optional `response_to` argument to the ID of the ori
 ```
 >>> bridge.send(data, 'sort', response_to=request.id)
 ```
-This will create a `Response` message where `msg.type` is `'response'` and `msg.request_id` is `request.id`.
 
 Typically this can be done by a client directly in its `receive_redis()` method:
 ```
@@ -56,5 +55,6 @@ def receive_redis(msg): # Responder
 		data = 'roger that'
 		bridge.send(data, 'my_channel', response_to=msg.id)
 ```
+This will create a `Response` message where `msg.type` is `'response'` and `msg.request_id` is `request.id`.
 
 To see a little toy demo of this pattern in action, check out [`demos/sorting_demo.py`](../../demos/sorting_demo.py).
