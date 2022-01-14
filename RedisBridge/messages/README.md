@@ -50,7 +50,7 @@ def receive_redis(msg) # Requester
 
 ### Responding
 
-To send a response to a message, use the RedisBridge method `response()`:
+To send a response to a message, use the RedisBridge method `respond()`:
 ```
 >>> bridge.respond(data, channel, request_id=msg.id)
 ```
