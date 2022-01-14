@@ -1,5 +1,5 @@
 """
-A simple example demonstrating request / response
+A simple example demonstrating non-blocking request / response
 through the internal bus via a RedisBridge.
 
 A request client sends over an unsorted list,
@@ -23,7 +23,7 @@ class RequestClient:
 		self.requests = set()
 
 	def send(self, data, is_request=True):
-		msg_id = self.bridge.send(data, 'sort', is_request=True)
+		msg_id = self.bridge.request(data, channel='sort', blocking=False)
 		self.requests.add(msg_id)
 
 	def receive_redis(self, msg):
@@ -31,9 +31,6 @@ class RequestClient:
 			if msg.request_id in self.requests:
 				print(self.__class__, 'receiving a response ...', '\n', msg)
 				print('Sorted Data:', msg.data, '\n')
-
-				# Remove the request ID from our set of requests
-				self.requests.remove(msg.request_id)
 
 
 class ResponseClient:
@@ -53,7 +50,7 @@ class ResponseClient:
 
 			# Send back the same message data, but sorted
 			data = sorted(msg.data)
-			self.bridge.send(data, 'sort', response_to=msg.id)
+			self.bridge.respond(data, channel='sort', request_id=msg.id)
 
 
 
@@ -80,13 +77,13 @@ if __name__ == '__main__':
 	# Our ResponseClient should still receive the request and respond
 	# Our RequestClient should NOT receive any response
 	print('\n', '-' * 32, '\n')
-	bridge.send(['uno', 'dos', 'tres'], 'sort', is_request=True)
+	bridge.request(['uno', 'dos', 'tres'], channel='sort')
 	time.sleep(2)
 
 	# Send a normal message on the 'sort' channel (i.e. neither request nor response)
 	# Both our clients should do nothing
 	print('\n', '-' * 32, '\n')
-	bridge.send(['c', 'b', 'a'], 'sort', is_request=False)
+	bridge.send(['c', 'b', 'a'], channel='sort')
 	time.sleep(2)
 
 	# Exit

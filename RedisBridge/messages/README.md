@@ -1,4 +1,5 @@
 
+
 # RedisBridge.messages
 
 The `RedisBridge.messages` module defines the message classes that get sent to observer clients.
@@ -18,21 +19,27 @@ Receiving data is as simple as implementing the `receive_redis(msg)` on the clie
 
 ## Request / Response
 
-RedisBridge also supports a request/response usage pattern.  `Request` and `Response`  are subclasses of `Message` that are defined for this purpose. To see a little toy demo of this pattern in action, check out [`demos/sorting_demo.py`](../../demos/sorting_demo.py).
+RedisBridge also supports a request/response usage pattern.  `Request` and `Response`  are subclasses of `Message` that are defined for this purpose. To see a little toy demo of this pattern in action, check out [`demos/sorting.py`](../../demos/sorting.py).
 
 ### Requesting
 
-To send a request, set the `is_request` flag to true:
+#### Blocking
+To send a request, use the RedisBridge method `request()`:
 ```
->>> bridge.send(data, channel, is_request=True)
+>>> response = bridge.request(data, channel)
 ```
-This will create a `Request` message where `msg.type` is `'request'`. All clients registered to the channel will receive the request, and can choose whether or not to respond.
+This creates and publishes `Request` message where `msg.type` is `'request'`. All clients registered to the channel will receive the request, and can choose whether or not to respond. Once a response is received, the bridge returns it as the result of the `request()` call.
 
-A requesting client may also want to keep track of the ID of its request message:
+#### Non-Blocking
+A requesting client may also want to send a request as a non-blocking call. To do so, simply set the `blocking` flag to false:
+
 ```
->>> self.request_id = bridge.send(data, channel, is_request=True)
+>>> self.request_id = bridge.request(data, channel, blocking=False)
 ```
-Finally, the requesting client needs to be able to handle responses in its `receive_redis()`  method:
+
+Rather than returning the first response immediately, the ID of the request message is returned for the client to keep track of and check against any incoming response messages.
+
+If the requesting client sends a non-blocking request, it needs to be able to handle any responses in its `receive_redis()`  method:
 
 ```
 def receive_redis(msg) # Requester
@@ -43,9 +50,9 @@ def receive_redis(msg) # Requester
 
 ### Responding
 
-To send a response, set the optional `response_to` argument to the ID of the original `Request` message:
+To send a response to a message, use the RedisBridge method `response()`:
 ```
->>> bridge.send(data, 'sort', response_to=request.id)
+>>> bridge.respond(data, channel, request_id=msg.id)
 ```
 
 Typically this can be done by a client directly in its `receive_redis()` method:
@@ -53,8 +60,8 @@ Typically this can be done by a client directly in its `receive_redis()` method:
 def receive_redis(msg): # Responder
 	if msg.channel == 'my_channel' and msg.type == 'request':
 		data = 'roger that'
-		bridge.send(data, 'my_channel', response_to=msg.id)
+		bridge.respond(data, 'my_channel', request_id=msg.id)
 ```
-This will create a `Response` message where `msg.type` is `'response'` and `msg.request_id` is `request.id`.
+This will create a `Response` message where `msg.type` is `'response'` and `msg.request_id` is `request.id`. All clients registered to the channel will receive the response, and can choose to ignore it or process it.
 
-To see a little toy demo of this pattern in action, check out [`demos/sorting_demo.py`](../../demos/sorting_demo.py).
+To see a little demo of the non-blocking request/response pattern in action, check out [`demos/sorting_nonblocking.py`](../../demos/sorting_nonblocking.py).

@@ -55,7 +55,7 @@ If we wanted to run locally and were unable to run a Redis server on the machine
 >>> bridge.start()
 ```
 
-5. Messages can be constructed and sent to Redis:
+5. Messages can be constructed and sent to Redis
 
 ```
 >>> bridge.send(belief_state, 'belief')

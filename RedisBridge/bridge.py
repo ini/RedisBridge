@@ -1,6 +1,7 @@
 import logging
 import pickle
 import redis
+import time
 
 from .messages import Message, Request, Response
 
@@ -11,7 +12,7 @@ class RedisBridge:
     A bridge class for handling connections to Redis as an internal bus.
 
     Example usage:
-    
+
     1. Create a RedisBridge
 
     >>> bridge = RedisBridge(host='localhost', port=6379)
@@ -39,8 +40,7 @@ class RedisBridge:
     >>> bridge.stop()
     """
 
-    def __init__(self, 
-        name=None, dummy_redis_server=False, host='localhost', port=6379, db=0):
+    def __init__(self, name=None, dummy_redis_server=False, host='localhost', port=6379, db=0):
         """
         Arguments:
             - name: the name of this RedisBridge
@@ -55,19 +55,19 @@ class RedisBridge:
             self.connection = fakeredis.FakeRedis(host=host, port=port, db=db, health_check_interval=1)
         else:
             self.connection = redis.Redis(host=host, port=port, db=db, health_check_interval=1)
-        
+
         self.pubsub = self.connection.pubsub(ignore_subscribe_messages=True)
         self.thread = None
 
         self.name = name
         self.observers = {}
-        self.requests = {}
+        self.responses = {}
 
         if not dummy_redis_server:
             # Set client pubsub hard / soft output buffer limits
             # 1 GB hard limit, 64 MB per 60 seconds soft limit
             self.connection.config_set(
-                'client-output-buffer-limit', 
+                'client-output-buffer-limit',
                 f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 32} {2 ** 32} 60')
 
         # Grab a handle to logger for the class, if it exists, else the default logger
@@ -75,7 +75,7 @@ class RedisBridge:
             self.logger = logging.getLogger(self.__class__.__name__)
         else:
             self.logger = logging.getLogger(__name__)
-        
+
         if dummy_redis_server:
             self.logger.info(f"{self}:  Connected to dummy Redis server.")
         else:
@@ -106,7 +106,7 @@ class RedisBridge:
     def register(self, observer, channel):
         """
         Register an observer object to receive messages of a specific channel.
-        When messages of the given channel are received, 
+        When messages of the given channel are received,
         the bridge calls observer.recieve(message).
 
         Arguments:
@@ -118,7 +118,7 @@ class RedisBridge:
         if not channel in self.observers.keys():
             self.subscribe(channel)
             self.observers[channel] = set()
-    
+
         # Add the observer
         self.observers[channel].add(observer)
 
@@ -160,15 +160,19 @@ class RedisBridge:
 
         Arguments:
             - message: dictionary representing the recived message.
-                The field message['data'] is given as a `bytes` object, 
+                The field message['data'] is given as a `bytes` object,
                 which may be decoded or unpickled by clients as needed.
         """
         message = Message.from_redis(message)
         self.logger.debug(f"{self}:  Received {message}'")
 
+        # Update responses
+        if isinstance(message, Response):
+            self.responses[message.request_id] = message
+
         # Forward message to relevant observers
-        if message['channel'] in self.observers.keys():
-            for observer in self.observers[message['channel']]:
+        if message.channel in self.observers.keys():
+            for observer in self.observers[message.channel]:
                 try:
                     observer.receive_redis(message)
                 except Exception as e:
@@ -177,7 +181,7 @@ class RedisBridge:
 
     def start(self, sleep_time=0):
         """
-        Start receiving messages from the Redis connection 
+        Start receiving messages from the Redis connection
         in a non-blocking background thread.
 
         Arguments:
@@ -196,7 +200,7 @@ class RedisBridge:
         Stop receiving messages from the Redis connection.
 
         Arguments:
-            - timeout: seconds before background thread timeout 
+            - timeout: seconds before background thread timeout
         """
         self.logger.info(f"{self}:  Stopping callback loop for the internal Redis bus")
         self.thread.stop()
@@ -205,32 +209,69 @@ class RedisBridge:
         self.connection.flushdb()
 
 
-    def send(self, data, channel, is_request=False, response_to=None):
+    def send(self, data, channel):
         """
-        Send a message with the provided on the given channel 
+        Send a message with the provided data on the given channel
         through the Redis connection.
 
         Arguments:
             - data: the message data to be published
-                Data type should be one of {bytes, str, int, float}.
-                Pickleable object types can be converted to bytes 
-                via the optional `should_pickle` argument. 
             - channel: the channel on which to publish the message
-
-        Returns:
-            - id: the unique string identifier for the sent message
         """
         self.logger.debug(f"{self}:  Publishing {data} on channel {channel}")
 
-        if is_request:
-            msg = Request(channel, data)
-
-        elif response_to is not None:
-            msg = Response(channel, data, request_id=response_to)
-
-        else:
-            msg = Message(channel, data)
-
+        # Create and send the message
+        msg = Message(channel, data)
         self.connection.publish(channel, pickle.dumps(msg))
-        return msg.id
+
+
+    def request(self, data, channel, blocking=True, timeout=5):
+        """
+        Sends a request with the provided data on the given channel
+        through the Redis connection.
+
+        Arguments:
+            - data: the request data to be published
+            - channel: the channel on which to publish the request
+            - blocking: boolean for whether or not to block and return the response,
+                or to return the request ID immediately
+            - timeout: number of seconds to wait for a response before returning None
+        """
+        self.logger.debug(f"{self}:  Sending request {data} on channel {channel}")
+
+        # Create and send the request
+        msg = Request(channel, data)
+        self.connection.publish(channel, pickle.dumps(msg))
+
+        # If non-blocking, return the request ID
+        if not blocking:
+            return msg.id
+
+        # If blocking, wait for a response
+        timeout = time.time() + timeout
+        self.responses[msg.id] = None
+        while self.responses[msg.id] is None and time.time() <= timeout:
+            pass
+
+        # Return the response
+        response = self.responses[msg.id]
+        del self.responses[msg.id]
+        return response
+
+
+    def respond(self, data, channel, request_id):
+        """
+        Sends a response to the given request on the given channel,
+        with the provided data through the Redis connection.
+
+        Arguments:
+            - data: the response data to be published
+            - channel: the channel on which to publish the response
+            - request_id: the ID of the message being responded to
+        """
+        self.logger.debug(f"{self}:  Sending response {data} on channel {channel}")
+
+        # Create and send the response
+        msg = Response(channel, data, request_id=request_id)
+        self.connection.publish(channel, pickle.dumps(msg))
 
