@@ -176,7 +176,8 @@ class RedisBridge:
                 try:
                     observer.receive_redis(message)
                 except Exception as e:
-                    self.logger.exception(f"{self}:  Error in observer {observer} receiving message - {e}")
+                    self.logger.exception(
+                        f"{self}:  Error in observer {observer} receiving message - {e}")
 
 
     def start(self, sleep_time=0):
@@ -189,7 +190,8 @@ class RedisBridge:
         """
         self.logger.info(f"{self}:  Starting callback loop with internal Redis bus")
         if self.pubsub.connection is None:
-            self.logger.warning(f"{self}:  Cannot start RedisBridge, as it is not currently subscribed to any channels.")
+            self.logger.warning(
+                f"{self}:  Cannot start RedisBridge, as it is not currently subscribed to any channels.")
         else:
             self.connection.flushdb()
             self.thread = self.pubsub.run_in_thread(sleep_time=sleep_time)
@@ -250,8 +252,11 @@ class RedisBridge:
         # If blocking, wait for a response
         timeout = time.time() + timeout
         self.responses[msg.id] = None
-        while self.responses[msg.id] is None and time.time() <= timeout:
-            pass
+        while self.responses[msg.id] is None:
+            if time.time() <= timeout:
+                self.logger.warning(
+                    f"{self}:  Request {data} on channel {channel} timed out after {timeout} seconds")
+                break
 
         # Return the response
         response = self.responses[msg.id]
