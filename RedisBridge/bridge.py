@@ -55,13 +55,13 @@ class RedisBridge:
             self.connection = fakeredis.FakeRedis(host=host, port=port, db=db, health_check_interval=1)
             self.logger.info(f"{self}:  Connected to dummy Redis server.")
         else:
-            self.connection = redis.Redis(host=host, port=port, db=db, health_check_interval=1)
-            self.logger.info(f"{self}:  Connected to Redis at host={host}, port={port}, db={db}")
             # Set client pubsub hard / soft output buffer limits
             # 1 GB hard limit, 64 MB per 60 seconds soft limit
+            self.connection = redis.Redis(host=host, port=port, db=db, health_check_interval=1)
             self.connection.config_set(
                 'client-output-buffer-limit',
                 f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 32} {2 ** 32} 60')
+            self.logger.info(f"{self}:  Connected to Redis at host={host}, port={port}, db={db}")
 
         self.pubsub = self.connection.pubsub(ignore_subscribe_messages=True)
         self.thread = None
@@ -69,7 +69,6 @@ class RedisBridge:
         self.name = name
         self.observers = {}
         self.responses = {}
-
 
 
     def __str__(self):
@@ -217,7 +216,7 @@ class RedisBridge:
         self.connection.publish(channel, pickle.dumps(msg))
 
 
-    def request(self, data, channel, blocking=True, timeout=5):
+    def request(self, data, channel, blocking=True, timeout=1.0):
         """
         Sends a request with the provided data on the given channel
         through the Redis connection.
@@ -243,7 +242,7 @@ class RedisBridge:
         timeout = time.time() + timeout
         self.responses[msg.id] = None
         while self.responses[msg.id] is None:
-            if time.time() <= timeout:
+            if time.time() >= timeout:
                 self.logger.warning(
                     f"{self}:  Request {data} on channel {channel} timed out after {timeout} seconds")
                 break
