@@ -53,8 +53,15 @@ class RedisBridge:
         if dummy_redis_server:
             import fakeredis
             self.connection = fakeredis.FakeRedis(host=host, port=port, db=db, health_check_interval=1)
+            self.logger.info(f"{self}:  Connected to dummy Redis server.")
         else:
             self.connection = redis.Redis(host=host, port=port, db=db, health_check_interval=1)
+            self.logger.info(f"{self}:  Connected to Redis at host={host}, port={port}, db={db}")
+            # Set client pubsub hard / soft output buffer limits
+            # 1 GB hard limit, 64 MB per 60 seconds soft limit
+            self.connection.config_set(
+                'client-output-buffer-limit',
+                f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 32} {2 ** 32} 60')
 
         self.pubsub = self.connection.pubsub(ignore_subscribe_messages=True)
         self.thread = None
@@ -63,23 +70,6 @@ class RedisBridge:
         self.observers = {}
         self.responses = {}
 
-        if not dummy_redis_server:
-            # Set client pubsub hard / soft output buffer limits
-            # 1 GB hard limit, 64 MB per 60 seconds soft limit
-            self.connection.config_set(
-                'client-output-buffer-limit',
-                f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 32} {2 ** 32} 60')
-
-        # Grab a handle to logger for the class, if it exists, else the default logger
-        if self.__class__.__name__ in logging.Logger.manager.loggerDict:
-            self.logger = logging.getLogger(self.__class__.__name__)
-        else:
-            self.logger = logging.getLogger(__name__)
-
-        if dummy_redis_server:
-            self.logger.info(f"{self}:  Connected to dummy Redis server.")
-        else:
-            self.logger.info(f"{self}:  Connected to Redis at host={host}, port={port}, db={db}")
 
 
     def __str__(self):
@@ -279,4 +269,16 @@ class RedisBridge:
         # Create and send the response
         msg = Response(channel, data, request_id=request_id)
         self.connection.publish(channel, pickle.dumps(msg))
+
+
+    @property
+    def logger(self):
+        """
+        Grab a handle to logger for the class, if it exists,
+        otherwise use the default logger.
+        """
+        if self.__class__.__name__ in logging.Logger.manager.loggerDict:
+            return logging.getLogger(self.__class__.__name__)
+        else:
+            return logging.getLogger(__name__)
 
