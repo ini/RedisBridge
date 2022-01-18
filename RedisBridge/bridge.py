@@ -195,8 +195,9 @@ class RedisBridge(Loggable):
             - timeout: seconds before background thread timeout
         """
         self.logger.info(f"{self}:  Stopping callback loop for the internal Redis bus")
-        self.thread.stop()
-        self.thread.join(timeout=timeout)
+        if self.thread:
+            self.thread.stop()
+            self.thread.join(timeout=timeout)
         self.pubsub.close()
         self.connection.flushdb()
 
