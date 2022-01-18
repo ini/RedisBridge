@@ -20,8 +20,8 @@ class RequestClient:
 	def __init__(self, bridge):
 		self.bridge = bridge
 
-	def send(self, data, is_request=True):
-		response = self.bridge.request(data, channel='sort')
+	def send(self, data):
+		response = self.bridge.request(data, channel='sort', timeout=1.0)
 		print(self.__class__, 'received a response ...', '\n', response)
 		print('Sorted Data:', response.data, '\n')
 
