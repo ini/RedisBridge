@@ -28,6 +28,11 @@ To send a request, use the RedisBridge method `request()`:
 ```
 >>> response = bridge.request(data, channel)
 ```
+We can also specify an optional `timeout` parameter:
+```
+>>> response = bridge.request(data, channel, timeout=1.0)
+```
+
 This creates and publishes `Request` message where `msg.type` is `'request'`. All clients registered to the channel will receive the request, and can choose whether or not to respond. Once a response is received, the bridge returns it as the result of the `request()` call.
 
 #### Non-Blocking
