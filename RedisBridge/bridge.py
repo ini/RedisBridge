@@ -4,10 +4,11 @@ import redis
 import time
 
 from .messages import Message, Request, Response
+from .utils import Loggable
 
 
 
-class RedisBridge:
+class RedisBridge(Loggable):
     """
     A bridge class for handling connections to Redis as an internal bus.
 
@@ -50,6 +51,10 @@ class RedisBridge:
             - port: port for the Redis server
             - db: database index to use with the Redis server
         """
+        self.name = name
+        self.observers = {}
+        self.responses = {}
+
         if dummy_redis_server:
             import fakeredis
             self.connection = fakeredis.FakeRedis(host=host, port=port, db=db, health_check_interval=1)
@@ -65,10 +70,6 @@ class RedisBridge:
 
         self.pubsub = self.connection.pubsub(ignore_subscribe_messages=True)
         self.thread = None
-
-        self.name = name
-        self.observers = {}
-        self.responses = {}
 
 
     def __str__(self):
@@ -268,16 +269,4 @@ class RedisBridge:
         # Create and send the response
         msg = Response(channel, data, request_id=request_id)
         self.connection.publish(channel, pickle.dumps(msg))
-
-
-    @property
-    def logger(self):
-        """
-        Grab a handle to logger for the class, if it exists,
-        otherwise use the default logger.
-        """
-        if self.__class__.__name__ in logging.Logger.manager.loggerDict:
-            return logging.getLogger(self.__class__.__name__)
-        else:
-            return logging.getLogger(__name__)
 
