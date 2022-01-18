@@ -210,7 +210,7 @@ class RedisBridge(Loggable):
             - data: the message data to be published
             - channel: the channel on which to publish the message
         """
-        self.logger.debug(f"{self}:  Publishing {data} on channel {channel}")
+        self.logger.debug(f"{self}:  Publishing {data} on channel '{channel}'")
 
         # Create and send the message
         msg = Message(channel, data)
@@ -229,7 +229,7 @@ class RedisBridge(Loggable):
                 or to return the request ID immediately
             - timeout: number of seconds to wait for a response before returning None
         """
-        self.logger.debug(f"{self}:  Sending request {data} on channel {channel}")
+        self.logger.debug(f"{self}:  Sending request {data} on channel '{channel}'")
 
         # Create and send the request
         msg = Request(channel, data)
@@ -240,12 +240,12 @@ class RedisBridge(Loggable):
             return msg.id
 
         # If blocking, wait for a response
-        timeout = time.time() + timeout
+        timeout_time = time.time() + timeout
         self.responses[msg.id] = None
         while self.responses[msg.id] is None:
-            if time.time() >= timeout:
+            if time.time() >= timeout_time:
                 self.logger.warning(
-                    f"{self}:  Request {data} on channel {channel} timed out after {timeout} seconds")
+                    f"{self}:  Request {data} on channel '{channel}' timed out after {timeout} seconds")
                 break
 
         # Return the response
@@ -264,7 +264,7 @@ class RedisBridge(Loggable):
             - channel: the channel on which to publish the response
             - request_id: the ID of the message being responded to
         """
-        self.logger.debug(f"{self}:  Sending response {data} on channel {channel}")
+        self.logger.debug(f"{self}:  Sending response {data} on channel '{channel}'")
 
         # Create and send the response
         msg = Response(channel, data, request_id=request_id)
