@@ -1,6 +1,6 @@
 """
 A simple example demonstrating non-blocking request / response
-through the internal bus via a RedisBridge.
+through a Redis server via RedisBridge.
 
 A request client sends over an unsorted list,
 and a response client sends back a sorted list.
@@ -29,7 +29,8 @@ class RequestClient:
 	def receive_redis(self, msg):
 		if msg.type == 'Response':
 			if msg.request_id in self.requests:
-				print(self.__class__, 'receiving a response ...', '\n', msg)
+				print(self.__class__.__name__, 'receiving a response ...')
+				print(msg)
 				print('Sorted Data:', msg.data, '\n')
 
 
@@ -45,7 +46,8 @@ class ResponseClient:
 
 	def receive_redis(self, msg):
 		if msg.type == 'Request':
-			print(self.__class__, 'receiving a request ...', '\n', msg)
+			print(self.__class__.__name__, 'receiving a request ...')
+			print(msg)
 			print('Unsorted Data:', msg.data, '\n')
 
 			# Send back the same message data, but sorted

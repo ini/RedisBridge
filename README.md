@@ -1,7 +1,7 @@
 
 # RedisBridge
 
-RedisBridge is a bridge to an internal pub/sub Redis bus.
+RedisBridge is a package that handles sending and receiving messages via a Redis server.
 
 ## Installation
 
@@ -15,9 +15,11 @@ The RedisBridge package can be installed via `pip`.  This can be done from the r
 
 ## Server
 
-This package does **NOT** require running a Redis server. As long as you are only running one RedisBridge instance on a single process, the bridge is able to simulate a server by storing state internally ([see below](#basic-usage)).
+This package does **NOT** actually require running a Redis server. As long as you are only running one RedisBridge instance on a single process, the bridge is able to simulate a server by storing state internally ([see below](#basic-usage)).
 
-However, for high-performance applications, one may want to spin up an actual Redis server. See [Redis's quickstart](https://redis.io/topics/quickstart) for installation instructions (although this should be already taken care of on ripley).
+However, for high-performance applications, one may want to spin up an actual Redis server. See [Redis's quickstart](https://redis.io/topics/quickstart) for installation instructions.
+
+For those running on the CMU RI "ripley" host, there should already be a Redis server running on port 6379.
 
 ## Basic Usage
 

@@ -14,19 +14,10 @@ class Observer(Loggable):
 
     Attributes:
         - bridge: RedisBridge.RedisBridge instance being observed
-        - logger: logging.Logger instance that log messages are sent to
 
     Methods:
-        - register_callback()
-        - deregister_callback()
-
-    Aliases:
-        - redis_bridge:
-            alias for `bridge`
-        - register_redis_callback():
-            alias for register_callback()
-        - deregister_redis_callback():
-            alias for deregister_callback()
+        - register_callback(callback, channel, message_type=None)
+        - deregister_callback(callback, channel=None, message_type=None)
     """
 
     def __init__(self, bridge):
@@ -49,14 +40,6 @@ class Observer(Loggable):
     def bridge(self):
         """
         The object's RedisBridge instance.
-        """
-        return self._bridge
-
-
-    @property
-    def redis_bridge(self):
-        """
-        Alias for `self.bridge`.
         """
         return self._bridge
 
@@ -90,7 +73,7 @@ class Observer(Loggable):
             self._message_processors[channel, message_type].append(callback)
 
             # Register with the bridge to receive this message
-            self.redis_bridge.register(self, channel)
+            self.bridge.register(self, channel)
 
 
     def deregister_callback(self, callback, channel=None, message_type=None):
@@ -118,21 +101,7 @@ class Observer(Loggable):
         for c in channels:
             if len(self._get_processors(c)) == 0:
                 self.logger.info(f"{self}:  Deregistering from channel '{c}' -- no registered callbacks")
-                self.redis_bridge.deregister(self, channel=c)
-
-
-    def register_redis_callback(self, *args, **kwargs):
-        """
-        Alias for `self.register_callback()`.
-        """
-        return self.register_callback(*args, **kwargs)
-
-
-    def deregister_redis_callback(self, *args, **kwargs):
-        """
-        Alias for `self.deregister_callback()`.
-        """
-        return self.deregister_callback(*args, **kwargs)
+                self.bridge.deregister(self, channel=c)
 
 
     def receive_redis(self, message):

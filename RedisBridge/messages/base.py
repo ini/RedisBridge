@@ -15,13 +15,13 @@ def uid(length=8):
 
 class Message:
     """
-    Base class for internal bus messages.
+    Base class for RedisBridge messages.
 
     Attributes:
         - id: a unique string identifier for this message
-        - type: a string indicating the type of this message
         - channel: the string name of the channel this message was sent on
         - data: the data for this message
+        - type: a string indicating the type of this message class
     """
 
     # Properties to include in __repr__

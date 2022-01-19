@@ -5,10 +5,10 @@ with open('README.md', 'r') as readme_file:
 
 setuptools.setup(
 	name='RedisBridge',
-	version='3.3', # study 3, spiral 3
+	version='1.0',
 	author='Ini Oguntola',
 	author_email='ioguntol@andrew.cmu.edu',
-	description='Bridge to internal Redis bus',
+	description='Send and receive messages via a Redis server',
 	long_description=long_description,
 	long_description_content_type='text/markdown',
 	url='https://gitlab.com/cmu_asist/RedisBridge',

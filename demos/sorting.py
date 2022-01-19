@@ -1,6 +1,6 @@
 """
 A simple example demonstrating request / response
-through the internal bus via a RedisBridge.
+through a Redis server via RedisBridge.
 
 A request client sends over an unsorted list,
 and a response client sends back a sorted list.
@@ -21,8 +21,9 @@ class RequestClient:
 		self.bridge = bridge
 
 	def send(self, data):
-		response = self.bridge.request(data, channel='sort', timeout=1.0)
-		print(self.__class__, 'received a response ...', '\n', response)
+		response = self.bridge.request(data, channel='sort')
+		print(self.__class__.__name__, 'receiving a response ...')
+		print(response)
 		print('Sorted Data:', response.data, '\n')
 
 
@@ -38,7 +39,8 @@ class ResponseClient:
 
 	def receive_redis(self, msg):
 		if msg.type == 'Request':
-			print(self.__class__, 'receiving a request ...', '\n', msg)
+			print(self.__class__.__name__, 'receiving a request ...')
+			print(msg)
 			print('Unsorted Data:', msg.data, '\n')
 
 			# Send back the same message data, but sorted
