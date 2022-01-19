@@ -14,9 +14,8 @@ class Message:
         - data: the data for this message
     """
 
-    def __init__(self, channel, data, type='message'):
+    def __init__(self, channel, data):
         self._id = str(uuid.uuid4())
-        self._type = type
         self._channel = channel
         self._data = data
 
@@ -27,14 +26,6 @@ class Message:
         Returns the unique string identifier for this message.
         """
         return self._id
-
-
-    @property
-    def type(self):
-        """
-        Returns a string indicating the type of this message.
-        """
-        return self._type
 
 
     @property
@@ -51,6 +42,14 @@ class Message:
         Returns the data for this message.
         """
         return self._data
+
+
+    @property
+    def type(self):
+        """
+        Returns a string indicating the type of this message.
+        """
+        return self.__class__.__name__
 
 
     def dict(self):
@@ -73,7 +72,7 @@ class Message:
         """
         Returns a string representation of this message.
         """
-        return f'{self.__class__.__name__}: {self.dict()}'
+        return f'<{self.__class__.__name__}: {self.dict()}>'
 
 
     @staticmethod

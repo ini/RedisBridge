@@ -8,7 +8,7 @@ class Request(Message):
     """
 
     def __init__(self, channel, data):
-        super().__init__(channel, data, type='request')
+        super().__init__(channel, data)
 
 
 
@@ -18,7 +18,7 @@ class Response(Message):
     """
 
     def __init__(self, channel, data, request_id):
-        super().__init__(channel, data, type='response')
+        super().__init__(channel, data)
         self._request_id = request_id
 
 

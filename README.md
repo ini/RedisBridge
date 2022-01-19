@@ -2,10 +2,6 @@
 
 RedisBridge is a bridge to an internal pub/sub Redis bus.
 
-## Requirements
-
-This package requires a running Redis server. See [Redis's quickstart](https://redis.io/topics/quickstart) for local installation instructions (although this should be already taken care of on ripley).
-
 ## Installation
 
 The RedisBridge package can be installed via `pip`.  This can be done from the root folder of the package with the following command:
@@ -16,11 +12,13 @@ The RedisBridge package can be installed via `pip`.  This can be done from the r
 
 ```pip install -e .```
 
-## Demos
+## Server
 
-Check out the [`demos`](./demos/) directory.
+This package does **NOT** require running a Redis server. As long as you are only running one RedisBridge instance on a single process, the bridge is able to simulate a server by storing state internally ([see below](#basic-usage)).
 
-## Example Usage
+However, for high-performance applications, one may want to spin up an actual Redis server. See [Redis's quickstart](https://redis.io/topics/quickstart) for installation instructions (although this should be already taken care of on ripley).
+
+## Basic Usage
 
 1. Create a RedisBridge
 
@@ -45,8 +43,8 @@ If we wanted to run locally and were unable to run a Redis server on the machine
 3. Register clients to listen to various channels
 
 ```
->>> bridge.register(client1, 'belief')
->>> bridge.register(client2, 'disalignment')
+>>> bridge.register(client1, 'channel1')
+>>> bridge.register(client2, 'channel2')
 ```
 
 4. Start the bridge to begin receiving messages
@@ -58,15 +56,28 @@ If we wanted to run locally and were unable to run a Redis server on the machine
 5. Messages can be constructed and sent to Redis
 
 ```
->>> bridge.send(belief_state, 'belief')
+>>> data = "Hello World!"
+>>> bridge.send(data, 'channel1')
 ```
 
-6. Stop the bridge to stop receiving messages
+6. Clients registered to the channel get a callback in `client.receive_redis(message)`
+```
+>>> class MyClient:
+... 	def receive_redis(message):
+... 		print(message.channel, message.data)
+...
+channel1 Hello World!
+```
+7. Stop the bridge to stop receiving messages
 
 ```
 >>> bridge.stop()
 ```
+## [Messages](./RedisBridge/messages/)
 
-## Docs
+For much more detail about RedisBridge messages, message types, and usage patterns, check out the documentation that lives in [`RedisBridge.messages`](./RedisBridge/messages/). Seriously, go take a look.
 
-[`RedisBridge.messages`](./RedisBridge/messages/)
+## Demos
+
+For some toy examples and demos, check out the [`demos`](./demos/) directory.
+

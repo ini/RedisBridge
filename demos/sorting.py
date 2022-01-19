@@ -37,7 +37,7 @@ class ResponseClient:
 		self.bridge.register(self, 'sort')
 
 	def receive_redis(self, msg):
-		if msg.type == 'request':
+		if msg.type == 'Request':
 			print(self.__class__, 'receiving a request ...', '\n', msg)
 			print('Unsorted Data:', msg.data, '\n')
 
