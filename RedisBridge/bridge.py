@@ -11,34 +11,6 @@ from .utils import Loggable
 class RedisBridge(Loggable):
     """
     A bridge class for handling connections to Redis as an internal bus.
-
-    Example usage:
-
-    1. Create a RedisBridge
-
-    >>> bridge = RedisBridge(host='localhost', port=6379)
-
-    2. Create clients (that implement `receive_redis(message)`)
-
-    >>> client1 = MyClient()
-    >>> client2 = MyOtherClient()
-
-    3. Register clients with various channels
-
-    >>> bridge.register(client1, 'belief')
-    >>> bridge.register(client2, 'disalignment')
-
-    4. Start the bridge to begin receiving messages
-
-    >>> bridge.start()
-
-    5. Messages can be constructed and sent to Redis:
-
-    >>> bridge.send(belief_state, 'belief')
-
-    6. Stop the bridge to stop receiving messages
-
-    >>> bridge.stop()
     """
 
     def __init__(self, name=None, dummy_redis_server=False, host='localhost', port=6379, db=0):
