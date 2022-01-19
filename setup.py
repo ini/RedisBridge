@@ -5,7 +5,7 @@ with open('README.md', 'r') as readme_file:
 
 setuptools.setup(
 	name='RedisBridge',
-	version='3.2.5', # study 3, spiral 2
+	version='3.3', # study 3, spiral 3
 	author='Ini Oguntola',
 	author_email='ioguntol@andrew.cmu.edu',
 	description='Bridge to internal Redis bus',
