@@ -97,4 +97,4 @@ To see a little demo of the non-blocking request/response pattern in action, che
 
 <br><br>
 ***
-[`Back to Table of Contents`](./README.md)
+[`Back to Docs`](./README.md)
