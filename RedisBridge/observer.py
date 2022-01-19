@@ -9,21 +9,32 @@ class Observer(Loggable):
     Internally maintains a lookup table of callbacks
     for each message class / type.
 
+    RedisBridge clients can interact with the bridge 
+    through an observer by registering callbacks.
+
     Attributes:
-        - redis_bridge: RedisBridge.RedisBridge instance being observed
+        - bridge: RedisBridge.RedisBridge instance being observed
         - logger: logging.Logger instance that log messages are sent to
 
     Methods:
-        - register_redis_callback()
-        - deregister_redis_callback()
+        - register_callback()
+        - deregister_callback()
+
+    Aliases:
+        - redis_bridge:
+            alias for `bridge`
+        - register_redis_callback():
+            alias for register_callback()
+        - deregister_redis_callback():
+            alias for deregister_callback()
     """
 
-    def __init__(self, redis_bridge):
+    def __init__(self, bridge):
         """
         Arguments:
-            - redis_bridge: a RedisBridge.RedisBridge instance
+            - bridge: a RedisBridge.RedisBridge instance
         """
-        self._redis_bridge = redis_bridge
+        self._bridge = bridge
         self._message_processors = defaultdict(list)
 
 
@@ -35,14 +46,22 @@ class Observer(Loggable):
 
 
     @property
-    def redis_bridge(self):
+    def bridge(self):
         """
         The object's RedisBridge instance.
         """
-        return self._redis_bridge
+        return self._bridge
 
 
-    def register_redis_callback(self, callback, channel, message_type=None):
+    @property
+    def redis_bridge(self):
+        """
+        Alias for `self.bridge`.
+        """
+        return self._bridge
+
+
+    def register_callback(self, callback, channel, message_type=None):
         """
         Register a callback, indicating the function that should be called when
         a message is received on the given channel. Note that multiple callbacks
@@ -55,13 +74,13 @@ class Observer(Loggable):
             - message_type: the type of message that should trigger the callback
                 If `None`, all messages types are triggers
         """
-        if not isinstance(str, channel):
+        if not isinstance(channel, str):
             raise TypeError(f"Expected string instance for channel, not {type(channel)}")
 
         elif not callable(callback):
             raise ValueError(f"Callback {callback} is not callable")
 
-        elif callback in self._get_processors(channel, _get_processors):
+        elif callback in self._get_processors(channel, message_type):
             # Issue a warning that the callback has already been registered
             self.logger.warning(
                 f"{self}:  Attempting to register existing callback for channel {channel}")
@@ -74,7 +93,7 @@ class Observer(Loggable):
             self.redis_bridge.register(self, channel)
 
 
-    def deregister_redis_callback(self, callback, channel=None, message_type=None):
+    def deregister_callback(self, callback, channel=None, message_type=None):
         """
         Deregister the callback as a message processor for the
         given channel and message type.
@@ -102,6 +121,20 @@ class Observer(Loggable):
                 self.redis_bridge.deregister(self, channel=c)
 
 
+    def register_redis_callback(self, *args, **kwargs):
+        """
+        Alias for `self.register_callback()`.
+        """
+        return self.register_callback(*args, **kwargs)
+
+
+    def deregister_redis_callback(self, *args, **kwargs):
+        """
+        Alias for `self.deregister_callback()`.
+        """
+        return self.deregister_callback(*args, **kwargs)
+
+
     def receive_redis(self, message):
         """
         Receive a message from the RedisBridge. Delegate the message to
@@ -115,12 +148,12 @@ class Observer(Loggable):
         """
         self.logger.debug(f"{self}:  Received {message} message")
 
-        # Get the processors for the message, and send to each callback
+        # Get the processors for the message
         processors = self._get_processors(message.channel, message.type)
         if len(processors) == 0:
-            self.logger.warning(
-                f"{self}:  No message processors found for {message} message.  Ignoring message.")
+            self.logger.debug(f"{self}:  No message processors found for {message} message.")
 
+        # Send message to each processor
         return [processor(message) for processor in processors]
 
 

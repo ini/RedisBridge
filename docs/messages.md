@@ -1,4 +1,10 @@
-# RedisBridge.messages
+[`Back to Docs`](./README.md)
+***
+<br>
+
+# `RedisBridge.messages`
+
+**Source Code:** [messages/](../RedisBridge/messages/)
 
 The `RedisBridge.messages` module defines the message classes that get sent to observing clients. This document also provides some detail about usage patterns.
 
@@ -21,7 +27,7 @@ This automatically creates and sends a `Message` object with a unique ID and the
 Receiving data is as simple as implementing the `receive_redis(msg)` on the client side, where `msg` will be a `Message` instance.
 ```
 >>> class MyClient:
-... 	def receive_redis(msg):
+... 	def receive_redis(self, msg):
 ... 		print(msg.channel, msg.type)
 ... 		print(msg.data)
 ...
@@ -32,7 +38,7 @@ thunder and lightning
 
 ## Request / Response
 
-RedisBridge also supports a request / response usage pattern.  `Request` and `Response`  are subclasses of `Message` that are defined for this purpose. To see a little toy demo of this pattern in action, check out [`demos/sorting.py`](../../demos/sorting.py).
+RedisBridge also supports a request / response usage pattern.  `Request` and `Response`  are subclasses of `Message` that are defined for this purpose. To see a little toy demo of this pattern in action, check out [`demos/sorting.py`](../demos/sorting.py).
 
 ### Requesting
 
@@ -87,4 +93,8 @@ Typically this can be done by a client directly in its `receive_redis()` method:
 ```
 This will create a `Response` message where `msg.type` is `'response'` and `msg.request_id` is `request.id`. All clients registered to the channel will receive the response in their own `receive_redis()` callback implementations, and can choose to process it or to ignore it.
 
-To see a little demo of the non-blocking request/response pattern in action, check out [`demos/sorting_nonblocking.py`](../../demos/sorting_nonblocking.py).
+To see a little demo of the non-blocking request/response pattern in action, check out [`demos/sorting_nonblocking.py`](../demos/sorting_nonblocking.py).
+
+<br><br>
+***
+[`Back to Table of Contents`](./README.md)

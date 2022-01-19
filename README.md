@@ -1,3 +1,4 @@
+
 # RedisBridge
 
 RedisBridge is a bridge to an internal pub/sub Redis bus.
@@ -20,62 +21,43 @@ However, for high-performance applications, one may want to spin up an actual Re
 
 ## Basic Usage
 
-1. Create a RedisBridge
-
+1) Create a bridge and an observer
 ```
->>> from RedisBridge import RedisBridge
->>> bridge = RedisBridge(host='localhost', port=6379)
-```
-
-If we wanted to run locally and were unable to run a Redis server on the machine, we could set the optional `dummy_redis_server` argument to `True`:
-
-```
->>> bridge = RedisBridge(dummy_redis_server=True)
+>>> import RedisBridge
+>>> bridge = RedisBridge.RedisBridge()
+>>> observer = RedisBridge.Observer(bridge)
 ```
 
-2. Create clients, which need to implement `client.receive_redis(message)`
-
+2) Register callbacks with the observer
 ```
->>> client1 = MyClient()
->>> client2 = MyOtherClient()
-```
-
-3. Register clients to listen to various channels
-
-```
->>> bridge.register(client1, 'channel1')
->>> bridge.register(client2, 'channel2')
+>>> callback = lambda msg: print('Received message:', msg)
+>>> observer.register_callback(callback, channel='my_channel')
 ```
 
-4. Start the bridge to begin receiving messages
-
+3) Start the bridge to begin receiving messages
 ```
 >>> bridge.start()
 ```
 
-5. Messages can be constructed and sent to Redis
-
+4. Send messages via the bridge
 ```
->>> data = "Hello World!"
->>> bridge.send(data, 'channel1')
+>>> bridge.send('Hello World!', channel='my_channel')
 ```
 
-6. Clients registered to the channel get a callback in `client.receive_redis(message)`
+The observer calls all callbacks registered with it on the given channel
 ```
->>> class MyClient:
-... 	def receive_redis(message):
-... 		print(message.channel, message.data)
-...
-channel1 Hello World!
+Received message: <Message: id='t2yedxi3', channel='my_channel', data='Hello World!'>
 ```
-7. Stop the bridge to stop receiving messages
+
+5. Stop the bridge to stop receiving messages
 
 ```
 >>> bridge.stop()
 ```
-## [Messages](./RedisBridge/messages/)
 
-For much more detail about RedisBridge messages, message types, and usage patterns, check out the documentation that lives in [`RedisBridge.messages`](./RedisBridge/messages/). Seriously, go take a look.
+## Docs
+
+For much more detail about RedisBridge classes, messages, and usage patterns, [check out the documentation](./docs/). Seriously, go take a look.
 
 ## Demos
 

@@ -1,5 +1,15 @@
 import pickle
-import uuid
+import random
+import string
+
+
+
+def uid(length=8):
+    """
+    Returns a unique string identifier.
+    """
+    alphabet = string.ascii_lowercase + string.digits
+    return ''.join(random.choices(alphabet, k=length))
 
 
 
@@ -14,8 +24,12 @@ class Message:
         - data: the data for this message
     """
 
+    # Properties to include in __repr__
+    REPR_PROPERTIES = ['id', 'channel', 'data']
+
+
     def __init__(self, channel, data):
-        self._id = str(uuid.uuid4())
+        self._id = uid()
         self._channel = channel
         self._data = data
 
@@ -68,11 +82,16 @@ class Message:
         return self.dict()[key]
 
 
-    def __str__(self):
+    def __repr__(self):
         """
         Returns a string representation of this message.
         """
-        return f'<{self.__class__.__name__}: {self.dict()}>'
+        properties = {k: getattr(self, k) for k in self.__class__.REPR_PROPERTIES}
+        for k, v in properties.items():
+            properties[k] = min(v.__repr__(), object.__repr__(v), key=len)
+
+        properties_repr = ', '.join([f'{k}={v}' for k, v in properties.items()])
+        return f'<{self.__class__.__name__}: {properties_repr}>'
 
 
     @staticmethod
