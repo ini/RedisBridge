@@ -205,7 +205,9 @@ class RedisBridge(Loggable):
         timeout_time = float('inf') if timeout is None else time.time() + timeout
         while self._responses[msg.id] is None:
             if time.time() >= timeout_time:
-                raise TimeoutError(f"Request {data} on channel '{channel}' timed out after {timeout} seconds")
+                e = TimeoutError(f"Request {data} on channel '{channel}' timed out after {timeout} seconds")
+                self.logger.exception(f"{self}:  {e}")
+                raise e
 
         # Return the response
         response = self._responses[msg.id]
