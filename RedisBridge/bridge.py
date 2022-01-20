@@ -21,9 +21,9 @@ class RedisBridge(Loggable):
         - register(observer, channel)
         - deregister(observer, channel=None)
         - start(sleep_time=0)
-        - stop(timeout=1.0)
+        - stop(timeout=None)
         - send(data, channel)
-        - request(data, channel, blocking=True, timeout=1.0)
+        - request(data, channel, blocking=True, timeout=None)
         - respond(data, channel, request_id)
         - create_observer()
     """
@@ -147,7 +147,7 @@ class RedisBridge(Loggable):
             self._thread = self._pubsub.run_in_thread(sleep_time=sleep_time)
 
 
-    def stop(self, timeout=1.0):
+    def stop(self, timeout=None):
         """
         Stop receiving messages from the Redis connection.
 
@@ -178,7 +178,7 @@ class RedisBridge(Loggable):
         self._connection.publish(channel, pickle.dumps(msg))
 
 
-    def request(self, data, channel, blocking=True, timeout=float('inf')):
+    def request(self, data, channel, blocking=True, timeout=None):
         """
         Sends a request with the provided data on the given channel
         through the Redis connection.
@@ -194,6 +194,7 @@ class RedisBridge(Loggable):
 
         # Create and send the request
         msg = Request(channel, data)
+        self._responses[msg.id] = None
         self._connection.publish(channel, pickle.dumps(msg))
 
         # If non-blocking, return the request ID
@@ -201,12 +202,9 @@ class RedisBridge(Loggable):
             return msg.id
 
         # If blocking, wait for a response
-        timeout_time = time.time() + timeout
-        self._responses[msg.id] = None
+        timeout_time = float('inf') if timeout is None else time.time() + timeout
         while self._responses[msg.id] is None:
             if time.time() >= timeout_time:
-                self.logger.warning(
-                    f"{self}:  Request {data} on channel '{channel}' timed out after {timeout} seconds")
                 raise TimeoutError(f"Request {data} on channel '{channel}' timed out after {timeout} seconds")
 
         # Return the response
