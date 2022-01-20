@@ -63,5 +63,5 @@ For much more detail about RedisBridge classes, messages, and usage patterns, [c
 
 ## Demos
 
-For some toy examples and demos, check out the [`demos`](./demos/) directory.
+For some toy examples and demos, [check out the demos folder](./demos/).
 

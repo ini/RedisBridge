@@ -91,7 +91,7 @@ Typically this can be done by a client directly in its `receive_redis()` method:
 ...			bridge.respond(data, 'my_channel', request_id=msg.id)
 ...
 ```
-This will create a `Response` message where `msg.type` is `'response'` and `msg.request_id` is `request.id`. All clients registered to the channel will receive the response in their own `receive_redis()` callback implementations, and can choose to process it or to ignore it.
+This will create a `Response` message where `msg.request_id` is the ID of the relevant `Request` message. All clients registered to the channel will receive the response in their own `receive_redis()` callback implementations, and can choose to process it or to ignore it.
 
 To see a little demo of the non-blocking request/response pattern in action, check out [`demos/sorting_nonblocking.py`](../demos/sorting_nonblocking.py).
 
