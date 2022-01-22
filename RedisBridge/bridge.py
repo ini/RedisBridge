@@ -3,6 +3,7 @@ import pickle
 import redis
 import time
 
+from .callback_decorator import CallbackDecorator
 from .messages import Message, Request, Response
 from .observer import Observer
 from .utils import Loggable
@@ -237,6 +238,13 @@ class RedisBridge(Loggable):
         Returns a new Observer instance that listens to this bridge.
         """
         return Observer(self)
+
+
+    def callback_decorator(self):
+        """
+        Returns a CallbackDecorator wrapper around this RedisBridge.
+        """
+        return CallbackDecorator(self)
 
 
     def _on_message(self, message):
