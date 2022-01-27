@@ -21,10 +21,9 @@ class Message:
         - id: a unique string identifier for this message
         - channel: the string name of the channel this message was sent on
         - data: the data for this message
-        - type: a string indicating the type of this message class
     """
 
-    # Properties to include in __repr__
+    # Properties to include in string representation (i.e. __repr__())
     REPR_PROPERTIES = ['id', 'channel', 'data']
 
 
@@ -56,14 +55,6 @@ class Message:
         Returns the data for this message.
         """
         return self._data
-
-
-    @property
-    def type(self):
-        """
-        Returns a string indicating the type of this message.
-        """
-        return self.__class__.__name__
 
 
     def dict(self):

@@ -1,5 +1,6 @@
 from collections import defaultdict
 from .base import RedisInterface
+from .. import messages
 
 
 
@@ -53,10 +54,19 @@ class CallbackDecorator(RedisInterface):
         if not isinstance(channel, str):
             self.logger.error(f"Expected string instance for channel, not {type(channel)}")
 
-        elif not callable(callback):
-            raise ValueError(f"Callback {callback} is not callable")
+        if not callable(callback):
+            self.logger.error(f"Callback {callback} is not callable")
 
-        elif callback in self._get_processors(channel, message_type):
+        if isinstance(message_type, str):
+            if not hasattr(messages, message_type):
+                self.logger.error(f"Invalid message type: {message_type}")
+            else:
+                message_type = getattr(messages, message_type)
+
+        if not isinstance(message_type, type) or messages.Message not in message_type.mro():
+            self.logger.error(f"Invalid message type: {message_type}")
+
+        if callback in self._get_processors(channel, message_type):
             # Issue a warning that the callback has already been registered
             self.logger.warning(
                 f"{self}:  Attempting to register existing callback for channel {channel}")
@@ -150,7 +160,7 @@ class CallbackDecorator(RedisInterface):
         self.logger.debug(f"{self}:  Received {message} message")
 
         # Get the processors for the message
-        processors = self._get_processors(message.channel, message.type)
+        processors = self._get_processors(message.channel, type(message))
         if len(processors) == 0:
             self.logger.debug(f"{self}:  No message processors found for {message} message.")
 
@@ -170,4 +180,7 @@ class CallbackDecorator(RedisInterface):
                 *self._message_processors[channel, message_type],
                 *self._message_processors[channel, None],
             ]
+
+    def _message_type_from_string(self):
+        pass
 
