@@ -1,19 +1,17 @@
-from .utils import Loggable
 from collections import defaultdict
+from .base import RedisInterface
 
 
 
-class Observer(Loggable):
+class CallbackDecorator(RedisInterface):
     """
-    An object that observes a Redis bridge.
+    A wrapper around a Redis bridge that extends with functionality to
+    register and deregister individual callback methods for specific
+    channels and message types, as opposed to registering objects
+    to handle message reception.
+
     Internally maintains a lookup table of callbacks
     for each message class / type.
-
-    RedisBridge clients can interact with the bridge 
-    through an observer by registering callbacks.
-
-    Attributes:
-        - bridge: RedisBridge.RedisBridge instance being observed
 
     Methods:
         - register_callback(callback, channel, message_type=None)
@@ -33,15 +31,7 @@ class Observer(Loggable):
         """
         Provide a string representation of the object.
         """
-        return self.__class__.__name__
-
-
-    @property
-    def bridge(self):
-        """
-        The object's RedisBridge instance.
-        """
-        return self._bridge
+        return f'CallbackDecorator @ {self._bridge}'
 
 
     def register_callback(self, callback, channel, message_type=None):
@@ -58,7 +48,7 @@ class Observer(Loggable):
                 If `None`, all messages types are triggers
         """
         if not isinstance(channel, str):
-            raise TypeError(f"Expected string instance for channel, not {type(channel)}")
+            self.logger.error(f"Expected string instance for channel, not {type(channel)}")
 
         elif not callable(callback):
             raise ValueError(f"Callback {callback} is not callable")
@@ -73,7 +63,7 @@ class Observer(Loggable):
             self._message_processors[channel, message_type].append(callback)
 
             # Register with the bridge to receive this message
-            self.bridge.register(self, channel)
+            self._bridge.register(self, channel)
 
 
     def deregister_callback(self, callback, channel=None, message_type=None):
@@ -101,10 +91,10 @@ class Observer(Loggable):
         for c in channels:
             if len(self._get_processors(c)) == 0:
                 self.logger.info(f"{self}:  Deregistering from channel '{c}' -- no registered callbacks")
-                self.bridge.deregister(self, channel=c)
+                self._bridge.deregister(self, channel=c)
 
 
-    def receive_redis(self, message):
+    def _receive_redis(self, message):
         """
         Receive a message from the RedisBridge. Delegate the message to
         callbacks registered in the message processors dictionary based on the

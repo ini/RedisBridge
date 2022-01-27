@@ -1,3 +1,2 @@
-from . import messages
+from . import interfaces, messages
 from .bridge import RedisBridge
-from .observer import Observer

@@ -3,7 +3,6 @@ import pickle
 import redis
 import time
 
-from .callback_decorator import CallbackDecorator
 from .messages import Message, Request, Response
 from .observer import Observer
 from .utils import Loggable
@@ -26,7 +25,6 @@ class RedisBridge(Loggable):
         - send(data, channel)
         - request(data, channel, blocking=True, timeout=None)
         - respond(data, channel, request_id)
-        - create_observer()
     """
 
     def __init__(self, name=None, dummy_redis_server=False, host='localhost', port=6379, db=0):
@@ -85,7 +83,7 @@ class RedisBridge(Loggable):
         """
         Register an observer object to receive messages of a specific channel.
         When messages of the given channel are received,
-        the bridge calls observer.recieve(message).
+        the bridge calls observer._receive_redis(message).
 
         Arguments:
             - observer: client object to receive messages
@@ -233,24 +231,10 @@ class RedisBridge(Loggable):
         self._connection.publish(channel, pickle.dumps(msg))
 
 
-    def create_observer(self):
-        """
-        Returns a new Observer instance that listens to this bridge.
-        """
-        return Observer(self)
-
-
-    def callback_decorator(self):
-        """
-        Returns a CallbackDecorator wrapper around this RedisBridge.
-        """
-        return CallbackDecorator(self)
-
-
     def _on_message(self, message):
         """
         Callback when the bridge receives a message from Redis.
-        Forwards a message to relevant observers (via `observer.receive_redis(message)`).
+        Forwards a message to relevant observers (via `observer._receive_redis(message)`).
 
         Arguments:
             - message: dictionary representing the recived message.
@@ -268,7 +252,7 @@ class RedisBridge(Loggable):
         if message.channel in self._observers.keys():
             for observer in self._observers[message.channel]:
                 try:
-                    observer.receive_redis(message)
+                    observer._receive_redis(message)
                 except Exception as e:
                     self.logger.exception(
                         f"{self}:  Error in observer {observer} receiving message - {e}")
