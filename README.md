@@ -7,11 +7,11 @@ RedisBridge is a package that handles sending and receiving messages via a Redis
 
 The RedisBridge package can be installed via `pip`.  This can be done from the root folder of the package with the following command:
 
-```git clone https://gitlab.com/cmu_asist/RedisBridge```
-
-```cd RedisBridge```
-
-```pip install -e .```
+```
+git clone https://gitlab.com/cmu_asist/RedisBridge
+cd RedisBridge && git checkout <branch>
+pip install --user -e .
+```
 
 ## Server
 
