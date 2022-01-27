@@ -4,5 +4,5 @@ Here we provide documentation for various RedisBridge classes and modules, along
 
 ### Table of Contents:
 - [`RedisBridge.RedisBridge`](./bridge.md)
-- [`RedisBridge.Observer`](./observer.md)
+- [`RedisBridge.interfaces`](./interfaces.md)
 - [`RedisBridge.messages`](./messages.md)

@@ -120,7 +120,7 @@ class CallbackDecorator(RedisInterface):
 
     def request(self, data, channel, blocking=True, timeout=None):
         """
-        Sends a request with the provided data on the given channel through Redis.
+        Send a request with the provided data on the given channel through Redis.
 
         Arguments:
             - data: the request data to be published
@@ -135,7 +135,7 @@ class CallbackDecorator(RedisInterface):
 
     def respond(self, data, channel, request_id):
         """
-        Sends a response to the given request on the given channel,
+        Send a response to the given request on the given channel,
         with the provided data through Redis.
 
         Arguments:
