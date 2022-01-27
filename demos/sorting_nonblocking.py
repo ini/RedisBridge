@@ -8,6 +8,8 @@ and a response client sends back a sorted list.
 import socket
 import time
 from RedisBridge import RedisBridge
+from RedisBridge.messages import Request, Response
+from RedisBridge.interfaces import CallbackDecorator
 
 
 
@@ -18,20 +20,20 @@ class RequestClient:
 	"""
 
 	def __init__(self, bridge):
-		self.bridge = bridge
-		self.bridge.register(self, 'sort')
+		self.bridge = CallbackDecorator(bridge)
+		self.bridge.register_callback(
+			self.on_sort_response, channel='sort', message_type=Response)
 		self.requests = set()
 
 	def send(self, data, is_request=True):
 		msg_id = self.bridge.request(data, channel='sort', blocking=False)
 		self.requests.add(msg_id)
 
-	def receive_redis(self, msg):
-		if msg.type == 'Response':
-			if msg.request_id in self.requests:
-				print(self.__class__.__name__, 'receiving a response ...')
-				print(msg)
-				print('Sorted Data:', msg.data, '\n')
+	def on_sort_response(self, msg):
+		if msg.request_id in self.requests:
+			print(self.__class__.__name__, 'receiving a response ...')
+			print(msg)
+			print('Sorted Data:', msg.data, '\n')
 
 
 class ResponseClient:
@@ -41,18 +43,17 @@ class ResponseClient:
 	"""
 
 	def __init__(self, bridge):
-		self.bridge = bridge
-		self.bridge.register(self, 'sort')
+		self.bridge = CallbackDecorator(bridge)
+		self.bridge.register_callback(self.sort, channel='sort', message_type=Request)
 
-	def receive_redis(self, msg):
-		if msg.type == 'Request':
-			print(self.__class__.__name__, 'receiving a request ...')
-			print(msg)
-			print('Unsorted Data:', msg.data, '\n')
+	def sort(self, msg):
+		print(self.__class__.__name__, 'receiving a request ...')
+		print(msg)
+		print('Unsorted Data:', msg.data, '\n')
 
-			# Send back the same message data, but sorted
-			data = sorted(msg.data)
-			self.bridge.respond(data, channel='sort', request_id=msg.id)
+		# Send back the same message data, but sorted
+		data = sorted(msg.data)
+		self.bridge.respond(data, channel='sort', request_id=msg.id)
 
 
 

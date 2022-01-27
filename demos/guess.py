@@ -1,6 +1,7 @@
-import RedisBridge
-import random
-import time
+import random, time
+from RedisBridge import RedisBridge
+from RedisBridge.interfaces import CallbackDecorator
+
 
 
 GAME_RANGE = (1, 100)
@@ -11,8 +12,8 @@ class Oracle:
 	
 	def __init__(self, bridge):
 		self.secret_number = random.randint(*GAME_RANGE)
-		self.observer = RedisBridge.Observer(bridge)
-		self.observer.register_callback(
+		self.bridge = CallbackDecorator(bridge)
+		self.bridge.register_callback(
 			self.judge_guess, channel='game', message_type='Request')
 
 
@@ -30,15 +31,15 @@ class Oracle:
 
 		# Send feedback over bridge
 		time.sleep(1)
-		self.observer.bridge.respond(
+		self.bridge.respond(
 			data=answer, channel='game', request_id=msg.id)
 
 
 class Guesser:
 
 	def __init__(self, bridge):
-		self.observer = RedisBridge.Observer(bridge)
-		self.observer.register_callback(
+		self.bridge = CallbackDecorator(bridge)
+		self.bridge.register_callback(
 			self.get_feedback, channel='game', message_type='Response')
 
 		self.min, self.max = GAME_RANGE
@@ -51,7 +52,7 @@ class Guesser:
 
 		# Send guess over bridge
 		time.sleep(1)
-		self.guess_id = self.observer.bridge.request(
+		self.guess_id = self.bridge.request(
 			data=self.guess, channel='game', blocking=False)
 
 
@@ -75,7 +76,7 @@ class Guesser:
 
 if __name__ == '__main__':
 	# Initialize the bridge and the players
-	bridge = RedisBridge.RedisBridge(dummy_redis_server=True)
+	bridge = RedisBridge(dummy_redis_server=True)
 	p1 = Oracle(bridge)
 	p2 = Guesser(bridge)
 
