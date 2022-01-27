@@ -4,7 +4,6 @@ import redis
 import time
 
 from .messages import Message, Request, Response
-from .observer import Observer
 from .utils import Loggable
 
 
