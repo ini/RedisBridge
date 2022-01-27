@@ -1,4 +1,4 @@
 from . import interfaces, messages
 from .bridge import RedisBridge
 
-__version__ = '1.0.2'
+__version__ = '1.1'
