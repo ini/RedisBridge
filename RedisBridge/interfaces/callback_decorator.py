@@ -63,8 +63,9 @@ class CallbackDecorator(RedisInterface):
             else:
                 message_type = getattr(messages, message_type)
 
-        if not isinstance(message_type, type) or messages.Message not in message_type.mro():
-            self.logger.error(f"Invalid message type: {message_type}")
+        if message_type is not None:
+            if not isinstance(message_type, type) or messages.Message not in message_type.mro():
+                self.logger.error(f"Invalid message type: {message_type}")
 
         if callback in self._get_processors(channel, message_type):
             # Issue a warning that the callback has already been registered
