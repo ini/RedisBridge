@@ -16,6 +16,9 @@ class CallbackDecorator(RedisInterface):
     Methods:
         - register_callback(callback, channel, message_type=None)
         - deregister_callback(callback, channel=None, message_type=None)
+        - send(data, channel)
+        - request(data, channel, blocking=True, timeout=None)
+        - respond(data, channel, request_id)
     """
 
     def __init__(self, bridge):
@@ -92,6 +95,45 @@ class CallbackDecorator(RedisInterface):
             if len(self._get_processors(c)) == 0:
                 self.logger.info(f"{self}:  Deregistering from channel '{c}' -- no registered callbacks")
                 self._bridge.deregister(self, channel=c)
+
+
+    def send(self, data, channel):
+        """
+        Send a message with the provided data on the given channel through Redis.
+
+        Arguments:
+            - data: the message data to be published
+            - channel: the channel on which to publish the message
+        """
+        return self._bridge.send(data, channel)
+
+
+    def request(self, data, channel, blocking=True, timeout=None):
+        """
+        Sends a request with the provided data on the given channel through Redis.
+
+        Arguments:
+            - data: the request data to be published
+            - channel: the channel on which to publish the request
+            - blocking: boolean for whether or not to block and return the response,
+                or to return the request ID immediately
+            - timeout: number of seconds to wait for a response
+        """
+        return self._bridge.request(
+            data, channel, blocking=blocking, timeout=timeout)
+
+
+    def respond(self, data, channel, request_id):
+        """
+        Sends a response to the given request on the given channel,
+        with the provided data through Redis.
+
+        Arguments:
+            - data: the response data to be published
+            - channel: the channel on which to publish the response
+            - request_id: the ID of the message being responded to
+        """
+        return self._bridge.respond(data, channel, request_id)
 
 
     def _receive_redis(self, message):
