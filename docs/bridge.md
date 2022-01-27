@@ -59,8 +59,8 @@ If we wanted to run locally and were unable to run a Redis server on the machine
 
 ```
 >>> class MyClient:
-... 	def _receive_redis(self, message):
-... 		print(message.channel, message.data)
+...     def _receive_redis(self, message):
+...         print(message)
 ...
 >>> client1 = MyClient()
 >>> client2 = MyClient()
@@ -87,9 +87,11 @@ If we wanted to run locally and were unable to run a Redis server on the machine
 ```
 
 6. All clients registered to the channel get a callback in `client._receive_redis(message)`
+
 ```
-channel1 Hello World!
+<Message: id='t2yedxi3', channel='channel1', data='Hello World!'>
 ```
+
 7. Stop the bridge to stop receiving messages
 
 ```

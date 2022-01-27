@@ -27,8 +27,8 @@ This automatically creates and sends a `Message` object with a unique ID and the
 Receiving data is as simple as implementing the `_receive_redis(msg)` on the client side, where `msg` will be a `Message` instance.
 ```
 >>> class MyClient:
-... 	def _receive_redis(self, msg):
-... 		print(msg)
+...     def _receive_redis(self, msg):
+...         print(msg)
 ...
 <Message: id='z6brcq36', channel='weather', data='thunder and lightning'>
 ```
@@ -59,7 +59,7 @@ This results in the following:
 1) RedisBridge creates and publishes a `Request` message with a unique ID.
 2) All clients registered to the channel will receive the request, and can choose whether or not to respond.
 3) Once the first `Response` message for this particular request is received, RedisBridge returns it as the result of the `request()` call.
-4) Otherwise, if no response is received before a timeout (default is 1 second), the `request()` call returns `None`.
+4) Otherwise, if no response is received before the specified timeout, the `request()` call raises a `TimeoutError`.
 
 #### Non-Blocking
 A client may also want to send a request as a non-blocking call. To do so, simply set the `blocking` flag to false:
@@ -73,11 +73,11 @@ Rather than returning the first response immediately, the ID of the request mess
 If a requesting client sends a non-blocking request, it can handle responses by registering a callback for responses on the channel:
 ```
 >>> def on_response(msg): # Requester
-...		if msg.request_id == my_request_id:
-...			print(msg.data)
+...     if msg.request_id == my_request_id:
+...         print(msg.data)
 ...
 >>> bridge.register_callback(
-	on_response, channel='my_channel', message_type='Response')
+        on_response, channel='my_channel', message_type='Response')
 ```
 
 ### Responding
@@ -90,11 +90,11 @@ To send a response to a message, use the RedisBridge (or RedisInterface) method 
 This is typically done by a client via registering a callback for request messages on a particular channel:
 ```
 >>> def on_request(msg): # Responder
-...		data = "i gotchu"
-...		bridge.respond(data, 'my_channel', request_id=msg.id)
+...     data = "i gotchu"
+...     bridge.respond(data, 'my_channel', request_id=msg.id)
 ...
 >>> bridge.register_callback(
-		on_request, channel='my_channel', message_type='Request')
+        on_request, channel='my_channel', message_type='Request')
 ```
 This will create a `Response` message where `msg.request_id` is the ID of the relevant `Request` message. **All** clients registered to the channel will receive the response, and can choose to process it or to ignore it (typically by checking the request ID).
 

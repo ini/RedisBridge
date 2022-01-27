@@ -38,22 +38,22 @@ Second, we'll define a class called `Oracle`, which does the following:
 2) Registers a `judge_guess(msg)` callback for requests on the "game" channel
 ```
 class Oracle:
-	def __init__(self, bridge):
-		self.secret_number = random.randint(1, 100)
-		self.bridge = CallbackDecorator(bridge)
-		self.bridge.register_callback(
-			self.judge_guess, channel='game', message_type='Request')
+    def __init__(self, bridge):
+        self.secret_number = random.randint(1, 100)
+        self.bridge = CallbackDecorator(bridge)
+        self.bridge.register_callback(
+            self.judge_guess, channel='game', message_type='Request')
 
-	def judge_guess(self, msg):
-		guess = msg.data
-		if self.secret_number > guess:
-			answer = 'higher'
-		elif self.secret_number < guess:
-			answer = 'lower'
-		else:
-			answer = 'perfect'
-		self.bridge.respond(
-			data=answer, channel='game', request_id=msg.id)
+    def judge_guess(self, msg):
+        guess = msg.data
+        if self.secret_number > guess:
+            answer = 'higher'
+        elif self.secret_number < guess:
+            answer = 'lower'
+        else:
+            answer = 'perfect'
+        self.bridge.respond(
+            data=answer, channel='game', request_id=msg.id)
 ```
 
 Now we define a `Guesser` class that:
@@ -62,27 +62,27 @@ Now we define a `Guesser` class that:
 3) Registers a `get_feedback(msg)` callback for responses on the "game" channel
 ```
 class Guesser:
-	def __init__(self, bridge):
-		self.bridge = CallbackDecorator(bridge)
-		self.bridge.register_callback(
-			self.get_feedback, channel='game', message_type='Response')
-		self.min, self.max = 1, 100
-		self.guess, self.guess_id = None, None
+    def __init__(self, bridge):
+        self.bridge = CallbackDecorator(bridge)
+        self.bridge.register_callback(
+            self.get_feedback, channel='game', message_type='Response')
+        self.min, self.max = 1, 100
+        self.guess, self.guess_id = None, None
 
-	def make_guess(self):
-		self.guess = random.randint(self.min, self.max)
-		self.guess_id = self.bridge.request(
-			data=self.guess, channel='game', blocking=False)
+    def make_guess(self):
+        self.guess = random.randint(self.min, self.max)
+        self.guess_id = self.bridge.request(
+            data=self.guess, channel='game', blocking=False)
 
-	def get_feedback(self, msg):
-		if msg.request_id == self.guess_id:
-			answer = msg.data
-			if answer == 'higher':
-				self.min = self.guess + 1
-				self.make_guess()
-			elif answer == 'lower':
-				self.max = self.guess - 1
-				self.make_guess()
+    def get_feedback(self, msg):
+        if msg.request_id == self.guess_id:
+            answer = msg.data
+            if answer == 'higher':
+                self.min = self.guess + 1
+                self.make_guess()
+            elif answer == 'lower':
+                self.max = self.guess - 1
+                self.make_guess()
 ```
 
 Now let's initialize the bridge and the players:
@@ -97,7 +97,7 @@ Finally, we start the bridge and make an initial guess:
 >>> p2.make_guess()
 ``` 
 
-To see this example in action, checkout [demos/guess.py](../demos/guess.py).
+To see this example in action, check out [demos/guess.py](../demos/guess.py).
 
 
 ## class `RedisBridge.interfaces.CallbackDecorator`
