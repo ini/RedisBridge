@@ -23,17 +23,20 @@ For those running on the CMU RI "ripley" host, there should already be a Redis s
 
 ## Basic Usage
 
-1) Create a bridge and an observer
+1) Create a bridge
 ```
->>> import RedisBridge
->>> bridge = RedisBridge.RedisBridge()
->>> observer = RedisBridge.Observer(bridge)
+>>> from RedisBridge import RedisBridge
+
+>>> bridge = RedisBridge()
 ```
 
-2) Register callbacks with the observer
+2) Register callbacks through a `CallbackDecorator` interface
 ```
+>>> from RedisBridge.interfaces import CallbackDecorator
+
 >>> callback = lambda msg: print('Received message:', msg)
->>> observer.register_callback(callback, channel='my_channel')
+>>> bridge_interface = CallbackDecorator(bridge)
+>>> bridge_interface.register_callback(callback, channel='my_channel')
 ```
 
 3) Start the bridge to begin receiving messages
@@ -41,12 +44,12 @@ For those running on the CMU RI "ripley" host, there should already be a Redis s
 >>> bridge.start()
 ```
 
-4. Send messages via the bridge
+4. Send messages via the bridge (or via a `CallbackDecorator`)
 ```
 >>> bridge.send('Hello World!', channel='my_channel')
 ```
 
-The observer calls all callbacks registered with it on the given channel
+The `CallbackDecorator` calls all callbacks registered with it on the given channel
 ```
 Received message: <Message: id='t2yedxi3', channel='my_channel', data='Hello World!'>
 ```
