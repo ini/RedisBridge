@@ -3,6 +3,7 @@ import pickle
 import redis
 import time
 
+from .interfaces import CallbackDecorator
 from .messages import Message, Request, Response
 from .utils import Loggable
 
@@ -227,6 +228,13 @@ class RedisBridge(Loggable):
         # Create and send the response
         msg = Response(channel, data, request_id=request_id)
         self._connection.publish(channel, pickle.dumps(msg))
+
+
+    def callback_decorator(self):
+        """
+        Return a new CallbackDecorator interface for this bridge.
+        """
+        return CallbackDecorator(self)
 
 
     def _on_message(self, message):
