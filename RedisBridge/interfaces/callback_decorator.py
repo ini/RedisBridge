@@ -180,7 +180,3 @@ class CallbackDecorator(RedisInterface):
                 *self._message_processors[channel, message_type],
                 *self._message_processors[channel, None],
             ]
-
-    def _message_type_from_string(self):
-        pass
-

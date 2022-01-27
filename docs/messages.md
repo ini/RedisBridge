@@ -24,21 +24,19 @@ Sending data on a particular channel can be done via the RedisBridge method `bri
 ```
 This automatically creates and sends a `Message` object with a unique ID and the given channel and data.
 
-Receiving data is as simple as implementing the `receive_redis(msg)` on the client side, where `msg` will be a `Message` instance.
+Receiving data is as simple as implementing the `_receive_redis(msg)` on the client side, where `msg` will be a `Message` instance.
 ```
 >>> class MyClient:
-... 	def receive_redis(self, msg):
-... 		print(msg.channel, msg.type)
-... 		print(msg.data)
+... 	def _receive_redis(self, msg):
+... 		print(msg)
 ...
-weather message
-thunder and lightning
+<Message: id='z6brcq36', channel='weather', data='thunder and lightning'>
 ```
 
 
 ## Request / Response
 
-RedisBridge also supports a request / response usage pattern.  `Request` and `Response`  are subclasses of `Message` that are defined for this purpose. To see a little toy demo of this pattern in action, check out [`demos/sorting.py`](../demos/sorting.py).
+RedisBridge also supports a request / response usage pattern.  `Request` and `Response`  are subclasses of `Message` that are defined for this purpose. To see a little toy demo of this pattern in action, check out [demos/sorting.py](../demos/sorting.py).
 
 Note: the examples in this section use the `RedisBridge.interfaces.CallbackDecorator` bridge interface. For more information about the `RedisBridge.interfaces` module, [read here](./interfaces.md).
 ```
@@ -96,11 +94,11 @@ This is typically done by a client via registering a callback for request messag
 ...		bridge.respond(data, 'my_channel', request_id=msg.id)
 ...
 >>> bridge.register_callback(
-	on_request, channel='my_channel', message_type='Request')
+		on_request, channel='my_channel', message_type='Request')
 ```
 This will create a `Response` message where `msg.request_id` is the ID of the relevant `Request` message. **All** clients registered to the channel will receive the response, and can choose to process it or to ignore it (typically by checking the request ID).
 
-To see a little demo of the non-blocking request/response pattern in action, check out [`demos/sorting_nonblocking.py`](../demos/sorting_nonblocking.py).
+To see a little demo of the non-blocking request/response pattern in action, check out [demos/sorting_nonblocking.py](../demos/sorting_nonblocking.py).
 
 
 ## class `RedisBridge.messages.Message`
@@ -119,13 +117,13 @@ To see a little demo of the non-blocking request/response pattern in action, che
 
 ## class `RedisBridge.messages.Request(Message)`
 
-**Source Code:** [base.py](../RedisBridge/messages/request_response.py)
+**Source Code:** [request_response.py](../RedisBridge/messages/request_response.py)
 
 **Description:** A request message that expects some response.
 
 ## class `RedisBridge.messages.Response(Message)`
 
-**Source Code:** [base.py](../RedisBridge/messages/request_response.py)
+**Source Code:** [request_response.py](../RedisBridge/messages/request_response.py)
 
 **Description:** A response message that stores the ID of its corresponding request.
 
