@@ -8,7 +8,7 @@
 
 `RedisBridge.interface` provides a family of wrappers around a RedisBridge that provide specific interfaces for interacting with the bridge.
 
-## Basics: `CallbackDecorator`
+## Basics: CallbackDecorator
 
 When implementing RedisBridge clients, it can become cumbersome keep track of various channels and messages types for every received message in `receive_redis(msg)`. `RedisBridge.interfaces.CallbackDecorator` takes care of all this under the hood. All a client needs do is wrap a RedisBridge and register callbacks:
 ```
