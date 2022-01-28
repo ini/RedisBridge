@@ -9,37 +9,6 @@
 `RedisBridge.RedisBridge` is a bridge class for handling sending / receiving messages via a Redis connection.
 
 
-## class `RedisBridge.RedisBridge`
-
-**Source Code:** [bridge.py](../RedisBridge/bridge.py)
-
-**Description:** Bridge class for handling sending / receiving messages via a Redis server.
-
-**Initialization:** `RedisBridge.RedisBridge(name=None, dummy_redis_server=False, host='localhost', port=6379, db=0)`
-
-### Attributes
-
-- `name` - the name of this RedisBridge
-
-### Methods
-
-- `subscribe(channel)` - Subscribe to messages from a specific channel.
-
-- `register(observer, channel)` - Register an observer object to receive messages of a specific channel. When messages of the given channel are received, the bridge calls `observer._receive_redis(message)`.
-
-- `deregister(observer, channel=None)` - Remove an observer from receiving messages of a given channel. If no channel is provided, then the observer is deregistered from all channels.
-
-- `start(sleep_time=0)` - Start receiving messages in a non-blocking background thread.
-
-- `stop(timeout=None)` - Stop receiving messages.
-
-- `send(data, channel)` - Send a message with the provided data on the given channel.
-
-- `request(data, channel, blocking=True, timeout=None)` - Send a request with the provided data on the given channel.
-
-- `respond(data, channel, request_id)` - Send a response to the given request, on the given channel with the provided data.
-
-
 ## Example Usage
 
 1. Create a RedisBridge
@@ -97,6 +66,38 @@ If we wanted to run locally and were unable to run a Redis server on the machine
 ```
 >>> bridge.stop()
 ```
+
+
+## class `RedisBridge.RedisBridge`
+
+**Source Code:** [bridge.py](../RedisBridge/bridge.py)
+
+**Description:** Bridge class for handling sending / receiving messages via a Redis server.
+
+**Initialization:** `RedisBridge.RedisBridge(name=None, dummy_redis_server=False, host='localhost', port=6379, db=0)`
+
+### Attributes
+
+- `name` - the name of this RedisBridge
+
+### Methods
+
+- `subscribe(channel)` - Subscribe to messages from a specific channel.
+
+- `register(observer, channel)` - Register an observer object to receive messages of a specific channel. When messages of the given channel are received, the bridge calls `observer._receive_redis(message)`.
+
+- `deregister(observer, channel=None)` - Remove an observer from receiving messages of a given channel. If no channel is provided, then the observer is deregistered from all channels.
+
+- `start(sleep_time=0)` - Start receiving messages in a non-blocking background thread.
+
+- `stop(timeout=None)` - Stop receiving messages.
+
+- `send(data, channel)` - Send a message with the provided data on the given channel.
+
+- `request(data, channel, blocking=True, timeout=None)` - Send a request with the provided data on the given channel.
+
+- `respond(data, channel, request_id)` - Send a response to the given request, on the given channel with the provided data.
+
 
 <br><br>
 ***
