@@ -41,7 +41,7 @@ For those running on the CMU RI "ripley" host, there should already be a Redis s
 >>> bridge.start()
 ```
 
-4. Send messages via the bridge (or via a `CallbackDecorator`)
+4. Send messages via the bridge (or via an interface)
 ```
 >>> bridge.send('Hello World!', channel='my_channel')
 ```
