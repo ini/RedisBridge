@@ -13,13 +13,13 @@
 When implementing RedisBridge clients, it can become cumbersome keep track of various channels and messages types for every received message in `_receive_redis(msg)`. `RedisBridge.interfaces.CallbackDecorator` takes care of all this under the hood. All a client needs do is wrap a RedisBridge and register callbacks:
 ```
 >>> bridge = RedisBridge()
->>> bridge = CallbackDecorator(bridge)
->>> bridge.register_callback(callback, channel)
+>>> interface = CallbackDecorator(bridge)
+>>> interface.register_callback(callback, channel)
 ```
 
 We can also register callbacks on a channel that are only triggered for a specific message type:
 ```
->>> bridge.register_callback(callback, channel, message_type='Request')
+>>> interface.register_callback(callback, channel, message_type='Request')
 ```
 
 
@@ -29,7 +29,8 @@ In this example we'll implement a two-player random number guessing game, where 
 
 First, let's get our imports:
 ```
-import random, RedisBridge
+import random
+from RedisBridge import RedisBridge
 from RedisBridge.interfaces import CallbackDecorator
 ```
 
@@ -40,8 +41,8 @@ Second, we'll define a class called `Oracle`, which does the following:
 class Oracle:
     def __init__(self, bridge):
         self.secret_number = random.randint(1, 100)
-        self.bridge = CallbackDecorator(bridge)
-        self.bridge.register_callback(
+        self.interface = CallbackDecorator(bridge)
+        self.interface.register_callback(
             self.judge_guess, channel='game', message_type='Request')
 
     def judge_guess(self, msg):
@@ -52,7 +53,7 @@ class Oracle:
             answer = 'lower'
         else:
             answer = 'perfect'
-        self.bridge.respond(
+        self.interface.respond(
             data=answer, channel='game', request_id=msg.id)
 ```
 
@@ -63,15 +64,15 @@ Now we define a `Guesser` class that:
 ```
 class Guesser:
     def __init__(self, bridge):
-        self.bridge = CallbackDecorator(bridge)
-        self.bridge.register_callback(
+        self.interface = CallbackDecorator(bridge)
+        self.interface.register_callback(
             self.get_feedback, channel='game', message_type='Response')
         self.min, self.max = 1, 100
         self.guess, self.guess_id = None, None
 
     def make_guess(self):
         self.guess = random.randint(self.min, self.max)
-        self.guess_id = self.bridge.request(
+        self.guess_id = self.interface.request(
             data=self.guess, channel='game', blocking=False)
 
     def get_feedback(self, msg):
@@ -87,7 +88,7 @@ class Guesser:
 
 Now let's initialize the bridge and the players:
 ```
->>> bridge = RedisBridge.RedisBridge()
+>>> bridge = RedisBridge()
 >>> p1 = Oracle(bridge)
 >>> p2 = Guesser(bridge)
 ```
