@@ -27,15 +27,9 @@ class CallbackDecorator(RedisInterface):
         Arguments:
             - bridge: a RedisBridge.RedisBridge instance
         """
+        super().__init__(bridge)
         self._bridge = bridge
         self._message_processors = defaultdict(list)
-
-
-    def __str__(self):
-        """
-        Provide a string representation of the object.
-        """
-        return f'CallbackDecorator @ {self._bridge}'
 
 
     def register_callback(self, callback, channel, message_type=None):
