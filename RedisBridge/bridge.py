@@ -136,12 +136,16 @@ class RedisBridge(Loggable):
         Arguments:
             sleep_time: number of seconds to time.sleep() per loop iteration
         """
+
+        # Subscribe to internal RedisBridge channel
+        self.subscribe('__RedisBridge__')
+
+        # Start the bridge
         self.logger.info(f"{self}:  Starting callback loop with RedisBridge")
-        if self._pubsub.connection is None:
-            self.logger.warning(
-                f"{self}:  Cannot start RedisBridge, as it is not currently subscribed to any channels.")
+        self._connection.flushdb()
+        if self._thread:
+            self.logger.warning(f"{self}:  Attempting to start RedisBridge that is already running")
         else:
-            self._connection.flushdb()
             self._thread = self._pubsub.run_in_thread(sleep_time=sleep_time)
 
 
@@ -153,9 +157,12 @@ class RedisBridge(Loggable):
             - timeout: seconds before background thread timeout
         """
         self.logger.info(f"{self}:  Stopping callback loop for RedisBridge")
+
         if self._thread:
             self._thread.stop()
             self._thread.join(timeout=timeout)
+            self._thread = None
+
         self._pubsub.close()
         self._connection.flushdb()
 
