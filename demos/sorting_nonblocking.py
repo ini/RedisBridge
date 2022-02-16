@@ -9,7 +9,7 @@ import socket
 import time
 from RedisBridge import RedisBridge
 from RedisBridge.messages import Request, Response
-from RedisBridge.interfaces import CallbackDecorator
+from RedisBridge.interfaces import CallbackInterface
 
 
 
@@ -20,7 +20,7 @@ class RequestClient:
 	"""
 
 	def __init__(self, bridge):
-		self.bridge = CallbackDecorator(bridge)
+		self.bridge = CallbackInterface(bridge)
 		self.bridge.register_callback(
 			self.on_sort_response, channel='sort', message_type=Response)
 		self.requests = set()
@@ -43,7 +43,7 @@ class ResponseClient:
 	"""
 
 	def __init__(self, bridge):
-		self.bridge = CallbackDecorator(bridge)
+		self.bridge = CallbackInterface(bridge)
 		self.bridge.register_callback(self.sort, channel='sort', message_type=Request)
 
 	def sort(self, msg):

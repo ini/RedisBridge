@@ -38,10 +38,10 @@ Receiving data is as simple as implementing the `_receive_redis(msg)` on the cli
 
 RedisBridge also supports a request / response usage pattern.  `Request` and `Response`  are subclasses of `Message` that are defined for this purpose. To see a little toy demo of this pattern in action, check out [demos/sorting.py](../demos/sorting.py).
 
-Note: the examples in this section use the `RedisBridge.interfaces.CallbackDecorator` bridge interface. For more information about the `RedisBridge.interfaces` module, [read here](./interfaces.md).
+Note: the examples in this section use the `RedisBridge.interfaces.CallbackInterface` bridge interface. For more information about the `RedisBridge.interfaces` module, [read here](./interfaces.md).
 ```
->>> from RedisBridge.interfaces import CallbackDecorator
->>> bridge = CallbackDecorator(bridge)
+>>> from RedisBridge.interfaces import CallbackInterface
+>>> bridge = CallbackInterface(bridge)
 ```
 
 ### Requesting

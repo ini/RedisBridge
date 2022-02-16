@@ -8,7 +8,7 @@ and a response client sends back a sorted list.
 import socket
 import time
 from RedisBridge import RedisBridge
-from RedisBridge.interfaces import CallbackDecorator
+from RedisBridge.interfaces import CallbackInterface
 from RedisBridge.messages import Request
 
 
@@ -20,7 +20,7 @@ class RequestClient:
 	"""
 
 	def __init__(self, bridge):
-		self.bridge = CallbackDecorator(bridge)
+		self.bridge = CallbackInterface(bridge)
 
 	def send(self, data):
 		response = self.bridge.request(data, channel='sort')
@@ -36,7 +36,7 @@ class ResponseClient:
 	"""
 
 	def __init__(self, bridge):
-		self.bridge = CallbackDecorator(bridge)
+		self.bridge = CallbackInterface(bridge)
 		self.bridge.register_callback(self.sort, channel='sort', message_type=Request)
 
 	def sort(self, msg):

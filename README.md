@@ -28,11 +28,11 @@ For those running on the CMU RI "ripley" host, there should already be a Redis s
 >>> bridge = RedisBridge()
 ```
 
-2) Register callbacks through a `CallbackDecorator` interface
+2) Register callbacks through a `CallbackInterface`
 ```
->>> from RedisBridge.interfaces import CallbackDecorator
+>>> from RedisBridge.interfaces import CallbackInterface
 >>> callback = lambda msg: print('Received message:', msg)
->>> bridge_interface = CallbackDecorator(bridge)
+>>> bridge_interface = CallbackInterface(bridge)
 >>> bridge_interface.register_callback(callback, channel='my_channel')
 ```
 
@@ -46,7 +46,7 @@ For those running on the CMU RI "ripley" host, there should already be a Redis s
 >>> bridge.send('Hello World!', channel='my_channel')
 ```
 
-The `CallbackDecorator` calls all callbacks registered with it on the given channel
+The `CallbackInterface` calls all callbacks registered with it on the given channel
 ```
 Received message: <Message: id='t2yedxi3', channel='my_channel', data='Hello World!'>
 ```

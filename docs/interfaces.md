@@ -8,12 +8,12 @@
 
 `RedisBridge.interfaces` provides a family of wrappers around a RedisBridge that provide specific interfaces for interacting with the bridge.
 
-## Basics: CallbackDecorator
+## Basics: CallbackInterface
 
-When implementing RedisBridge clients, it can become cumbersome keep track of various channels and messages types for every received message in `_receive_redis(msg)`. `RedisBridge.interfaces.CallbackDecorator` takes care of all this under the hood. All a client needs do is wrap a RedisBridge and register callbacks:
+When implementing RedisBridge clients, it can become cumbersome keep track of various channels and messages types for every received message in `_receive_redis(msg)`. `RedisBridge.interfaces.CallbackInterface` takes care of all this under the hood. All a client needs do is wrap a RedisBridge and register callbacks:
 ```
 >>> bridge = RedisBridge()
->>> interface = CallbackDecorator(bridge)
+>>> interface = CallbackInterface(bridge)
 >>> interface.register_callback(callback, channel)
 ```
 
@@ -25,13 +25,13 @@ We can also register callbacks on a channel that are only triggered for a specif
 
 ## Example: Guess the Number
 
-In this example we'll implement a two-player random number guessing game, where each player will be a client with a bridge wrapped in a `CallbackDecorator`.
+In this example we'll implement a two-player random number guessing game, where each player will be a client with a bridge wrapped in a `CallbackInterface`.
 
 First, let's get our imports:
 ```
 import random
 from RedisBridge import RedisBridge
-from RedisBridge.interfaces import CallbackDecorator
+from RedisBridge.interfaces import CallbackInterface
 ```
 
 Second, we'll define a class called `Oracle`, which does the following:
@@ -41,7 +41,7 @@ Second, we'll define a class called `Oracle`, which does the following:
 class Oracle:
     def __init__(self, bridge):
         self.secret_number = random.randint(1, 100)
-        self.interface = CallbackDecorator(bridge)
+        self.interface = CallbackInterface(bridge)
         self.interface.register_callback(
             self.judge_guess, channel='game', message_type='Request')
 
@@ -64,7 +64,7 @@ Now we define a `Guesser` class that:
 ```
 class Guesser:
     def __init__(self, bridge):
-        self.interface = CallbackDecorator(bridge)
+        self.interface = CallbackInterface(bridge)
         self.interface.register_callback(
             self.get_feedback, channel='game', message_type='Response')
         self.min, self.max = 1, 100
@@ -101,13 +101,13 @@ Finally, we start the bridge and make an initial guess:
 To see this example in action, check out [demos/guess.py](../demos/guess.py).
 
 
-## class `RedisBridge.interfaces.CallbackDecorator`
+## class `RedisBridge.interfaces.CallbackInterface`
 
-**Source Code:** [callback_decorator.py](../RedisBridge/interfaces/callback_decorator.py)
+**Source Code:** [callback_interface.py](../RedisBridge/interfaces/callback_interface.py)
 
 **Description:** A wrapper around a Redis bridge that extends with functionality to register and deregister individual callback methods for specific channels and message types, as opposed to handling all messages in a single `_receive_redis()` method.
 
-**Initialization:** `RedisBridge.interfaces.CallbackDecorator(bridge)`
+**Initialization:** `RedisBridge.interfaces.CallbackInterface(bridge)`
 
 ### Methods
 
