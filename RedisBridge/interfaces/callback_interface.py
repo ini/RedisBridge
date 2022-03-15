@@ -89,14 +89,16 @@ class CallbackInterface(RedisInterface):
         self.logger.debug(f"{self}:  Deregistering callback {callback}")
 
         # Remove the callback from self._message_processors
+        removed = set()
         for c, mt in self._message_processors.keys():
             if channel in {c, None} and message_type in {mt, None}:
                 if callback in self._message_processors[c, mt]:
                     self._message_processors[c, mt].remove(callback)
+                    removed.add((c, mt))
 
         # Deregister with the bridge from any unneeded channels
-        channels = {c for c, mt in self._message_processors.keys()}
-        for c in channels:
+        for c, mt in removed:
+            del self._message_processors[c, mt]
             if len(self._get_processors(c)) == 0:
                 self.logger.info(f"{self}:  Deregistering from channel '{c}' -- no registered callbacks")
                 self._bridge.deregister(self, channel=c)
