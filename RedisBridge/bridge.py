@@ -1,11 +1,12 @@
-import logging
 import pickle
+import queue
 import redis
-import time
 
 from .interfaces import CallbackDecorator
 from .messages import Message, Request, Response
 from .utils import Loggable
+
+from collections import defaultdict
 
 
 
@@ -39,7 +40,7 @@ class RedisBridge(Loggable):
         """
         self.name = name
         self._observers = {}
-        self._responses = {}
+        self._responses = defaultdict(queue.Queue)
 
         if dummy_redis_server:
             import fakeredis
@@ -199,7 +200,6 @@ class RedisBridge(Loggable):
 
         # Create and send the request
         msg = Request(channel, data)
-        self._responses[msg.id] = None
         self._connection.publish(channel, pickle.dumps(msg))
 
         # If non-blocking, return the request ID
@@ -207,17 +207,15 @@ class RedisBridge(Loggable):
             return msg.id
 
         # If blocking, wait for a response
-        timeout_time = float('inf') if timeout is None else time.time() + timeout
-        while self._responses[msg.id] is None:
-            if time.time() >= timeout_time:
-                e = TimeoutError(f"Request {data} on channel '{channel}' timed out after {timeout} seconds")
-                self.logger.exception(f"{self}:  {e}")
-                raise e
+        try:
+            response = self._responses[msg.id].get(timeout=timeout)
+            return response
 
-        # Return the response
-        response = self._responses[msg.id]
-        del self._responses[msg.id]
-        return response
+        # Raise a TimeoutError if no response received
+        except queue.Empty:
+            e = TimeoutError(f"Request {data} on channel '{channel}' timed out after {timeout} seconds")
+            self.logger.error(f"{self}:  {e}")
+            raise e
 
 
     def respond(self, data, channel, request_id):
@@ -259,7 +257,7 @@ class RedisBridge(Loggable):
 
         # Update responses
         if isinstance(message, Response):
-            self._responses[message.request_id] = message
+            self._responses[message.request_id].put(message)
 
         # Forward message to relevant observers
         if message.channel in self._observers.keys():
