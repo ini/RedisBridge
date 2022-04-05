@@ -5,11 +5,8 @@ RedisBridge is a package that handles sending and receiving messages via a Redis
 
 ## Installation
 
-The RedisBridge package can be installed via `pip`.  This can be done with the following commands:
 ```
-git clone https://gitlab.com/cmu_asist/RedisBridge
-cd RedisBridge
-pip install --user -e .
+pip install RedisBridge
 ```
 
 ## Server
@@ -17,8 +14,6 @@ pip install --user -e .
 This package does **NOT** actually require running a Redis server. As long as you are only running one RedisBridge instance on a single process, the bridge is able to simulate a server by storing state internally ([see docs](./docs/bridge.md)).
 
 However, for high-performance applications, one may want to spin up an actual Redis server. See [Redis's quickstart](https://redis.io/topics/quickstart) for installation instructions.
-
-For those running on the CMU RI "ripley" host, there should already be a Redis server running on port 6379.
 
 ## Basic Usage
 
@@ -32,6 +27,7 @@ For those running on the CMU RI "ripley" host, there should already be a Redis s
 ```
 >>> from RedisBridge.interfaces import CallbackInterface
 >>> callback = lambda msg: print('Received message:', msg)
+
 >>> bridge_interface = CallbackInterface(bridge)
 >>> bridge_interface.register_callback(callback, channel='my_channel')
 ```
