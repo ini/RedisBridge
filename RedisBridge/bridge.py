@@ -47,11 +47,11 @@ class RedisBridge(Loggable):
             self.logger.info(f"{self}:  Connected to dummy Redis server.")
         else:
             # Set client pubsub hard / soft output buffer limits
-            # 1 GB hard limit, 64 MB per 60 seconds soft limit
+            # 1 GB hard limit, 256 MB per 60 seconds soft limit
             self._connection = redis.Redis(host=host, port=port, db=db, health_check_interval=1)
             self._connection.config_set(
                 'client-output-buffer-limit',
-                f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 32} {2 ** 32} 60')
+                f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 30} {2 ** 28} 60')
             self.logger.info(f"{self}:  Connected to Redis at host={host}, port={port}, db={db}")
 
         self._pubsub = self._connection.pubsub(ignore_subscribe_messages=True)
