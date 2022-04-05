@@ -5,7 +5,7 @@ with open('README.md', 'r') as readme_file:
 
 setuptools.setup(
 	name='RedisBridge',
-	version='1.1.4',
+	version='1.1.5',
 	author='Ini Oguntola',
 	author_email='ioguntol@andrew.cmu.edu',
 	description='Send and receive messages via a Redis server',
