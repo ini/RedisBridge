@@ -17,7 +17,7 @@ class Response(Message):
     A response message that stores the ID of its corresponding request.
     """
 
-    REPR_PROPERTIES = [*Message.REPR_PROPERTIES, 'request_id']
+    PROPERTIES = [*Message.PROPERTIES, 'request_id']
 
 
     def __init__(self, channel, data, request_id):
@@ -32,3 +32,12 @@ class Response(Message):
         """
         return self._request_id
 
+
+    @classmethod
+    def _decode(cls, json_data):
+        """
+        Decode message from JSON dictionary.
+        """
+        msg = super()._decode(json_data)
+        msg._request_id = json_data['request_id']
+        return msg

@@ -1,8 +1,7 @@
-import pickle
 import queue
 import redis
 
-from .messages import Message, Request, Response
+from .messages import decode, Message, Request, Response
 from .utils import Loggable
 
 from collections import defaultdict
@@ -180,7 +179,7 @@ class RedisBridge(Loggable):
 
         # Create and send the message
         msg = Message(channel, data)
-        self._connection.publish(channel, pickle.dumps(msg))
+        self._connection.publish(channel, msg._encode())
 
 
     def request(self, data, channel, blocking=True, timeout=None):
@@ -199,7 +198,7 @@ class RedisBridge(Loggable):
 
         # Create and send the request
         msg = Request(channel, data)
-        self._connection.publish(channel, pickle.dumps(msg))
+        self._connection.publish(channel, msg._encode())
 
         # If non-blocking, return the request ID
         if not blocking:
@@ -231,7 +230,7 @@ class RedisBridge(Loggable):
 
         # Create and send the response
         msg = Response(channel, data, request_id=request_id)
-        self._connection.publish(channel, pickle.dumps(msg))
+        self._connection.publish(channel, msg._encode())
 
 
     def _on_message(self, message):
@@ -242,10 +241,17 @@ class RedisBridge(Loggable):
         Arguments:
             - message: dictionary representing the recived message.
                 The field message['data'] is given as a `bytes` object,
-                which may be decoded or unpickled by clients as needed.
+                which may be decoded by clients as needed.
         """
-        message = Message.from_redis(message)
-        self.logger.debug(f"{self}:  Received {message}'")
+
+        # Decode `Message` instance from raw Redis message 
+        try:
+            message = decode(message)
+            self.logger.debug(f"{self}:  Received {message}'")
+        except Exception as e:
+            self.logger.error(f"{self}:  Could not decode message - {message}")
+            self.logger.exception(f"{self}:  {e}")
+            return
 
         # Update responses
         if isinstance(message, Response):
