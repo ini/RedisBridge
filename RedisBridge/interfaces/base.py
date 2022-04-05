@@ -10,7 +10,11 @@ class RedisInterface(Loggable):
     """
 
     def __init__(self, bridge):
-        self._bridge = bridge
+        """
+        Arguments:
+            - bridge: a RedisBridge or RedisInterface instance
+        """
+        self._bridge = bridge._unwrapped
 
 
     def __str__(self):
@@ -19,3 +23,11 @@ class RedisInterface(Loggable):
         """
         bridge_str = str(self._bridge).strip('[]')
         return f'[{self.__class__.__name__} @ {bridge_str}]'
+
+
+    @property
+    def _unwrapped(self):
+        """
+        Internal property that returns the underlying bridge.
+        """
+        return self._bridge

@@ -268,3 +268,10 @@ class RedisBridge(Loggable):
                     self.logger.exception(
                         f"{self}:  Error in observer {observer} receiving message - {e}")
 
+
+    @property
+    def _unwrapped(self):
+        """
+        Internal property that returns the underlying bridge.
+        """
+        return self

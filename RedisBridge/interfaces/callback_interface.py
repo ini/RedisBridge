@@ -25,7 +25,7 @@ class CallbackInterface(RedisInterface):
     def __init__(self, bridge):
         """
         Arguments:
-            - bridge: a RedisBridge.RedisBridge instance
+            - bridge: a RedisBridge or RedisInterface instance
         """
         super().__init__(bridge)
         self._bridge = bridge
