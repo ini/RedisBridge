@@ -74,7 +74,9 @@ If we wanted to run locally and were unable to run a Redis server on the machine
 
 **Description:** Bridge class for handling sending / receiving messages via a Redis server.
 
-**Initialization:** `RedisBridge.RedisBridge(name=None, mock_redis_server=False, host='localhost', port=6379, db=0, **red)`
+**Initialization:** `RedisBridge.RedisBridge(name=None, mock_redis_server=False, host='localhost', port=6379, db=0, **redis_kwargs)`
+
+[Check here](https://redis-py.readthedocs.io/en/stable/connections.html#redis.Redis) for a full list of optional Redis keyword arguments.
 
 ### Attributes
 
