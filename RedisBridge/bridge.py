@@ -1,8 +1,12 @@
+import atexit
+import fakeredis
 import queue
 import redis
+import subprocess
+import time
 
 from .messages import decode, Message, Request, Response
-from .utils import Loggable
+from .utils import Loggable, check_server
 
 from collections import defaultdict
 
@@ -26,35 +30,110 @@ class RedisBridge(Loggable):
         - respond(data, channel, request_id)
     """
 
-    def __init__(self, name=None, dummy_redis_server=False, host='localhost', port=6379, db=0):
+    def __init__(self, name=None, mock_redis_server=False, **redis_kwargs):
         """
         Arguments:
             - name: the name of this RedisBridge
-            - dummy_redis_server: boolean indicating whether or not to use a dummy Redis connection
+            - mock_redis_server: boolean indicating whether or not to use a mock Redis connection
                 that simulates talking to a Redis server by storing state internally
+
+        Redis Keyword Arguments:
             - host: host of the Redis server
             - port: port for the Redis server
-            - db: database index to use with the Redis server
+            - db: database number to use with the Redis server
+
+        For more Redis keyword arguments,
+        see: https://redis-py.readthedocs.io/en/stable/connections.html#redis.Redis
         """
         self.name = name
+
         self._observers = {}
         self._responses = defaultdict(queue.Queue)
+        self._connection = None
+        self._pubsub = None
+        self._thread = None
+        self._server_process = None
 
-        if dummy_redis_server:
-            import fakeredis
-            self._connection = fakeredis.FakeRedis(host=host, port=port, db=db, health_check_interval=1)
-            self.logger.info(f"{self}:  Connected to dummy Redis server.")
-        else:
+        if mock_redis_server:
+            self._connect_mock()
+            return
+
+        # Try to connect to given host & port
+        self._connect(**redis_kwargs)
+
+        # Fallback to connecting to localhost
+        if not self._connection:
+            # Spin up a local Redis server
+            port = redis_kwargs.get('port', 6379)
+            self.logger.warning(f"{self}:  Attempting to spin up Redis server at localhost:{port}")
+            try:
+                self._server_process = subprocess.Popen(['rredis-server', '--port', str(port)])
+
+                # Wait for local Redis server
+                timeout = 2.0
+                start = time.time()
+                while check_server('localhost', port):
+                    if time.time() - start > timeout:
+                        self._server_process.terminate()
+                        break
+            except FileNotFoundError as e:
+                self.logger.error(f"{self}:  Could not find executable 'redis-server'.")
+            except Exception as e:
+                self.logger.error(f"{self}:  Could not spin up Redis server - {e}")
+
+
+            # Connect to local Redis server
+            self._connect(**dict(redis_kwargs, host='localhost'))
+
+        # Fallback to using mock Redis server
+        if not self._connection:
+            self._connect_mock()
+
+        # Stop bridge on program termination
+        atexit.register(self.stop)
+
+
+    def _connect(self, **kwargs):
+        """
+        Create and configure connection to Redis server.
+        """
+        host = kwargs.get('host', 'localhost')
+        port = kwargs.get('port', 6379)
+        db = kwargs.get('db', 0)
+
+        try:
+            self._connection = redis.Redis(**kwargs)
+            self._connection.ping()
+
             # Set client pubsub hard / soft output buffer limits
             # 1 GB hard limit, 256 MB per 60 seconds soft limit
-            self._connection = redis.Redis(host=host, port=port, db=db, health_check_interval=1)
             self._connection.config_set(
                 'client-output-buffer-limit',
-                f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 30} {2 ** 28} 60')
-            self.logger.info(f"{self}:  Connected to Redis at host={host}, port={port}, db={db}")
+                f'normal 0 0 0 slave 268435456 67108864 60 pubsub 1GB 256MB 60',
+            )
 
+            self.logger.info(f"{self}:  Connected to Redis at {host}:{port}, database {db}")
+            self._pubsub = self._connection.pubsub(ignore_subscribe_messages=True)
+
+        except redis.exceptions.ConnectionError as e:
+            self._connection = None
+            self._pubsub = None
+            self.logger.warning(f"{self}:  Could not connect to Redis server at {host}:{port} - {e}")
+
+        except Exception as e:
+            self._connection = None
+            self._pubsub = None
+            self.logger.warning(f"{self}:  Could not connect to Redis server at {host}:{port} - {e}")
+            raise e
+
+
+    def _connect_mock(self):
+        """
+        Creat connection to mock Redis server.
+        """
+        self._connection = fakeredis.FakeRedis()
         self._pubsub = self._connection.pubsub(ignore_subscribe_messages=True)
-        self._thread = None
+        self.logger.info(f"{self}:  Connected to mock Redis server")
 
 
     def __str__(self):
@@ -162,8 +241,14 @@ class RedisBridge(Loggable):
             self._thread.join(timeout=timeout)
             self._thread = None
 
-        self._pubsub.close()
-        self._connection.flushdb()
+        if self._pubsub:
+            self._pubsub.close()
+
+        if self._connection:
+            self._connection.flushdb()
+
+        if self._server_process:
+            self._server_process.terminate()
 
 
     def send(self, data, channel):
