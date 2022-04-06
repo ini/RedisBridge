@@ -1,9 +1,7 @@
-import pickle
 import queue
 import redis
 
-from .interfaces import CallbackDecorator
-from .messages import Message, Request, Response
+from .messages import decode, Message, Request, Response
 from .utils import Loggable
 
 from collections import defaultdict
@@ -48,11 +46,11 @@ class RedisBridge(Loggable):
             self.logger.info(f"{self}:  Connected to dummy Redis server.")
         else:
             # Set client pubsub hard / soft output buffer limits
-            # 1 GB hard limit, 64 MB per 60 seconds soft limit
+            # 1 GB hard limit, 256 MB per 60 seconds soft limit
             self._connection = redis.Redis(host=host, port=port, db=db, health_check_interval=1)
             self._connection.config_set(
                 'client-output-buffer-limit',
-                f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 32} {2 ** 32} 60')
+                f'normal 0 0 0 slave 268435456 67108864 60 pubsub {2 ** 30} {2 ** 28} 60')
             self.logger.info(f"{self}:  Connected to Redis at host={host}, port={port}, db={db}")
 
         self._pubsub = self._connection.pubsub(ignore_subscribe_messages=True)
@@ -181,7 +179,7 @@ class RedisBridge(Loggable):
 
         # Create and send the message
         msg = Message(channel, data)
-        self._connection.publish(channel, pickle.dumps(msg))
+        self._connection.publish(channel, msg._encode())
 
 
     def request(self, data, channel, blocking=True, timeout=None):
@@ -200,7 +198,7 @@ class RedisBridge(Loggable):
 
         # Create and send the request
         msg = Request(channel, data)
-        self._connection.publish(channel, pickle.dumps(msg))
+        self._connection.publish(channel, msg._encode())
 
         # If non-blocking, return the request ID
         if not blocking:
@@ -232,14 +230,7 @@ class RedisBridge(Loggable):
 
         # Create and send the response
         msg = Response(channel, data, request_id=request_id)
-        self._connection.publish(channel, pickle.dumps(msg))
-
-
-    def callback_decorator(self):
-        """
-        Return a new CallbackDecorator interface for this bridge.
-        """
-        return CallbackDecorator(self)
+        self._connection.publish(channel, msg._encode())
 
 
     def _on_message(self, message):
@@ -250,10 +241,17 @@ class RedisBridge(Loggable):
         Arguments:
             - message: dictionary representing the recived message.
                 The field message['data'] is given as a `bytes` object,
-                which may be decoded or unpickled by clients as needed.
+                which may be decoded by clients as needed.
         """
-        message = Message.from_redis(message)
-        self.logger.debug(f"{self}:  Received {message}'")
+
+        # Decode `Message` instance from raw Redis message 
+        try:
+            message = decode(message)
+            self.logger.debug(f"{self}:  Received {message}'")
+        except Exception as e:
+            self.logger.error(f"{self}:  Could not decode message - {message}")
+            self.logger.exception(f"{self}:  {e}")
+            return
 
         # Update responses
         if isinstance(message, Response):

@@ -1,3 +1,5 @@
+import codecs
+import json
 import pickle
 import random
 import string
@@ -23,8 +25,8 @@ class Message:
         - data: the data for this message
     """
 
-    # Properties to include in string representation (i.e. __repr__())
-    REPR_PROPERTIES = ['id', 'channel', 'data']
+    # Properties to include in message encoding
+    PROPERTIES = ['id', 'channel', 'data']
 
 
     def __init__(self, channel, data):
@@ -57,27 +59,21 @@ class Message:
         return self._data
 
 
-    def dict(self):
-        """
-        Returns a dictionary of message properties.
-        """
-        class_attributes = {k: getattr(self.__class__, k) for k in dir(self.__class__)}
-        class_properties = {k for k, v in class_attributes.items() if isinstance(v, property)}
-        return {k: getattr(self, k) for k in class_properties}
-
-
     def __getitem__(self, key):
         """
         Backwards compatibility for clients who treat messages as dictionaries.
         """
-        return self.dict()[key]
+        if key in self.PROPERTIES:
+            return getattr(self, key)
+
+        raise KeyError(key)
 
 
     def __repr__(self):
         """
         Returns a string representation of this message.
         """
-        properties = {k: getattr(self, k) for k in self.__class__.REPR_PROPERTIES}
+        properties = {key: getattr(self, key) for key in self.PROPERTIES}
         for k, v in properties.items():
             properties[k] = min(v.__repr__(), object.__repr__(v), key=len)
 
@@ -85,17 +81,39 @@ class Message:
         return f'<{self.__class__.__name__}: {properties_repr}>'
 
 
-    @staticmethod
-    def from_redis(message):
+    def _encode(self):
         """
-        Constructs a Message object from a raw Redis message.
+        Encode message to JSON string.
         """
+        json_data = {key: getattr(self, key) for key in self.PROPERTIES}
+        json_data['type'] = self.__class__.__name__
+
         try:
-            msg = pickle.loads(message['data'])
-            assert isinstance(msg, Message)
-            assert msg.channel == message['channel'].decode()
-            return msg
+            # Serialize to JSON
+            return json.dumps(json_data)
 
-        except Exception as e:
-            raise e
+        except TypeError:
+            # Convert data to byte string, then serialize to JSON
+            data = codecs.encode(pickle.dumps(json_data['data']), 'base64').decode()
+            json_data['data'] = data
+            return json.dumps(json_data)
 
+
+    @classmethod
+    def _decode(cls, json_data):
+        """
+        Decode message from JSON dictionary.
+        """
+        msg = cls.__new__(cls)
+        msg._id = json_data['id']
+        msg._channel = json_data['channel']
+
+        # Unpickle data to Python object, if possible
+        msg._data = json_data['data']
+        if isinstance(json_data['data'], str):
+            try:
+                msg._data = pickle.loads(codecs.decode(json_data['data'].encode(), 'base64'))
+            except:
+                msg._data = json_data['data']
+
+        return msg
