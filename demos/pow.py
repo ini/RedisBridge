@@ -1,3 +1,4 @@
+import time
 from RedisBridge import RedisBridge
 
 
@@ -19,4 +20,7 @@ if __name__ == '__main__':
 	bridge.start()
 	bridge.send(3, channel='square')
 	bridge.send(2, channel='cube')
+
+	# Stop the bridge
+	time.sleep(.1)
 	bridge.stop()
