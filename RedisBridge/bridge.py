@@ -171,8 +171,8 @@ class RedisBridge(Loggable):
 
     def register_callback(self, *args, **kwargs):
         """
-        Register a callback, indicating the function that should be called when
-        a message of a given type is received on a given channel.
+        Register a callback to be triggered when message of a given type
+        is received on a given channel.
 
         See `RedisBridge.interfaces.CallbackInterface.register_callback()`.
         """

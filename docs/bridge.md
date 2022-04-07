@@ -9,7 +9,7 @@
 `RedisBridge.RedisBridge` is a bridge class for handling sending / receiving messages via a Redis connection.
 
 
-## Example Usage
+## Basic Usage
 
 1. Create a RedisBridge
 
@@ -18,19 +18,19 @@
 >>> bridge = RedisBridge.RedisBridge(host='localhost', port=6379)
 ```
 
-If we wanted to run locally and were unable to run a Redis server on the machine, we could set the optional `use_mock_redis_server` argument to `True`:
+If all of our clients are on the same local process and we are unable to run a Redis server on the machine, we could set the optional `use_mock_redis_server` argument to `True`:
 
 ```
 >>> bridge = RedisBridge.RedisBridge(use_mock_redis_server=True)
 ```
 
-2. Create clients, which need to implement `_receive_redis(message)`
+2. Create observer clients, which need to implement `_receive_redis(message)`
 
 ```
 >>> class MyClient:
 ...     def _receive_redis(self, message):
 ...         print(message)
-...
+
 >>> client1 = MyClient()
 >>> client2 = MyClient()
 ```
@@ -67,6 +67,40 @@ If we wanted to run locally and were unable to run a Redis server on the machine
 >>> bridge.stop()
 ```
 
+## Callbacks
+
+When implementing RedisBridge clients, it can become cumbersome keep track of various channels and messages types for every received message in `_receive_redis(msg)`. The bridge also integrates a [`CallbackInterface`](./interfaces.md#class-redisbridgeinterfacescallbackinterface) for triggering callbacks on receiving a message of a given type on a given channel.
+
+### Example: Powers
+
+Let's define a couple callbacks:
+```
+>>> def square(msg):
+... 	print(msg.data ** 2)
+
+>>> def cube(msg):
+... 	print(msg.data ** 3)
+```
+
+Now we'll create a bridge and register our callbacks for specific channels:
+```
+>>> from RedisBridge import RedisBridge
+>>> bridge = RedisBridge()
+>>> bridge.register_callback(square, 'square')
+>>> bridge.register_callback(cube, 'cube')
+```
+
+Test it out:
+```
+>>> bridge.start()
+>>> bridge.send(3, channel='square')
+9
+>>> bridge.send(2, channel='cube')
+8
+```
+
+To see the full example in action, check out [demos/pow.py](../demos/pow.py).
+
 
 ## class `RedisBridge.RedisBridge`
 
@@ -89,6 +123,10 @@ If we wanted to run locally and were unable to run a Redis server on the machine
 - `register(observer, channel)` - Register an observer object to receive messages of a specific channel. When messages of the given channel are received, the bridge calls `observer._receive_redis(message)`.
 
 - `deregister(observer, channel=None)` - Remove an observer from receiving messages of a given channel. If no channel is provided, then the observer is deregistered from all channels.
+
+- `register_callback(callback, channel, message_type=None)` - Register a callback to be triggered when message of a given type is received on a given channel.
+
+- `deregister_callback(callback, channel=None, message_type=None)` - Deregister the callback as a message handler for the given channel and message type.
 
 - `start(sleep_time=0)` - Start receiving messages in a non-blocking background thread.
 

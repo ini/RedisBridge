@@ -115,11 +115,11 @@ To see this example in action, check out [demos/guess.py](../demos/guess.py).
 
 - `deregister_callback(callback, channel=None, message_type=None)` - Deregister the callback as a message processor for the given channel and message type.
 
-- `send(data, channel)` - Send a message with the provided data on the given channel.
+- `send(*args, **kwargs)` - Send a message through the bridge. See `RedisBridge.RedisBridge.send()`.
 
-- `request(data, channel, blocking=True, timeout=None)` - Sends a request with the provided data on the given channel.
+- `request(*args, **kwargs)` - Send a request through the bridge. See `RedisBridge.RedisBridge.request()`.
 
-- `respond(data, channel, request_id)` - Send a response to the given request, on the given channel with the provided data.
+- `respond(*args, **kwargs)` - Send a response through the bridge. See `RedisBridge.RedisBridge.respond()`.
 
 
 <br><br>

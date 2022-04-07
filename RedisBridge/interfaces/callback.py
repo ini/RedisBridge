@@ -119,7 +119,7 @@ class CallbackInterface(RedisInterface):
 
     def respond(self, *args, **kwargs):
         """
-        Send a response through the bridge. See `RedisBridge.RedisBridge.response()`.
+        Send a response through the bridge. See `RedisBridge.RedisBridge.respond()`.
         """
         return self._unwrapped.respond(*args, **kwargs)
 
