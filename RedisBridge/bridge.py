@@ -61,7 +61,7 @@ class RedisBridge(Loggable):
         # If indicated, use mock Redis server
         if use_mock_redis_server:
             self._connect_mock()
-            atexit.register(self.stop)
+            atexit.register(self._cleanup)
             return
 
         # Try to connect to given host & port
@@ -96,7 +96,7 @@ class RedisBridge(Loggable):
             self._connect_mock()
 
         # Stop bridge on program termination
-        atexit.register(self.stop)
+        atexit.register(self._cleanup)
 
 
     def __str__(self):
@@ -230,9 +230,6 @@ class RedisBridge(Loggable):
         if self._connection:
             self._connection.flushdb()
 
-        if self._server_process:
-            self._server_process.terminate()
-
 
     def send(self, data, channel):
         """
@@ -299,6 +296,15 @@ class RedisBridge(Loggable):
         # Create and send the response
         msg = Response(channel, data, request_id=request_id)
         self._connection.publish(channel, msg._encode())
+
+
+    def _cleanup(self):
+        """
+        Clean up any connection to the Redis server.
+        """
+        self.stop()
+        if self._server_process:
+            self._server_process.terminate()
 
 
     def _connect(self, **kwargs):
