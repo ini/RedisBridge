@@ -5,10 +5,11 @@ import redis
 import subprocess
 import time
 
+from collections import defaultdict
+
+from .interfaces import CallbackInterface
 from .messages import decode, Message, Request, Response
 from .utils import Loggable, check_server
-
-from collections import defaultdict
 
 
 
@@ -23,6 +24,8 @@ class RedisBridge(Loggable):
         - subscribe(channel)
         - register(observer, channel)
         - deregister(observer, channel=None)
+        - register_callback(callback, channel, message_type=None)
+        - deregister_callback(callback, channel=None, message_type=None)
         - start(sleep_time=0)
         - stop(timeout=None)
         - send(data, channel)
@@ -53,9 +56,12 @@ class RedisBridge(Loggable):
         self._pubsub = None
         self._thread = None
         self._server_process = None
+        self._callback_interface = CallbackInterface(self)
 
+        # If indicated, use mock Redis server
         if use_mock_redis_server:
             self._connect_mock()
+            atexit.register(self.stop)
             return
 
         # Try to connect to given host & port
@@ -161,6 +167,26 @@ class RedisBridge(Loggable):
             if len(self._observers[c]) == 0:
                 self.logger.info(f"{self}:  Unsubscribing from channel '{c}' -- no registered listeners")
                 self._pubsub.unsubscribe(c)
+
+
+    def register_callback(self, *args, **kwargs):
+        """
+        Register a callback, indicating the function that should be called when
+        a message of a given type is received on a given channel.
+
+        See `RedisBridge.interfaces.CallbackInterface.register_callback()`.
+        """
+        self._callback_interface.register_callback(*args, **kwargs)
+
+
+    def deregister_callback(self, *args, **kwargs):
+        """
+        Deregister the callback as a message handler for the
+        given channel and message type.
+
+        See `RedisBridge.interfaces.CallbackInterface.deregister_callback()`.
+        """
+        self._callback_interface.deregister_callback(*args, **kwargs)
 
 
     def start(self, sleep_time=0):
