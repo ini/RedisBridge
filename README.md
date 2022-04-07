@@ -9,11 +9,10 @@ RedisBridge is a Python package that handles sending and receiving messages acro
 pip install RedisBridge
 ```
 
-## Server
+## Requirements
 
-This package does **NOT** actually require running a Redis server. As long as you are only running one RedisBridge instance on a single process, the bridge is able to simulate a server by storing state internally ([see docs](./docs/bridge.md)).
-
-However, for real-world applications, one may want to spin up an actual Redis server. See [Redis's quickstart](https://redis.io/topics/quickstart) for installation instructions.
+* RedisBridge is intended to connect to a Redis server. To install and run Redis, [see the instructions here](https://redis.io/topics/quickstart).
+* RedisBridge supports Python 3.6 or later.
 
 ## Getting Started
 
@@ -33,7 +32,7 @@ $ redis-server --port 6379 &
 >>> def callback(msg):
 ...     print('Received message:', msg)
 
->>> bridge.register_callback(callback, channel='my_channel')
+>>> bridge.register_callback(callback, 'my_channel')
 ```
 
 4) Start each bridge to begin sending/receiving messages
@@ -43,7 +42,7 @@ $ redis-server --port 6379 &
 
 5. Send messages to other clients via bridge
 ```
->>> bridge.send('Hello World!', channel='my_channel')
+>>> bridge.send('Hello World!', 'my_channel')
 ```
 
 Each bridge calls all callbacks registered with it on the given channel
