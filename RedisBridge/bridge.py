@@ -30,12 +30,12 @@ class RedisBridge(Loggable):
         - respond(data, channel, request_id)
     """
 
-    def __init__(self, name=None, mock_redis_server=False, **redis_kwargs):
+    def __init__(self, name=None, use_mock_redis_server=False, **redis_kwargs):
         """
         Arguments:
             - name: the name of this RedisBridge
-            - mock_redis_server: boolean indicating whether or not to use a mock Redis connection
-                that simulates talking to a Redis server by storing state internally
+            - use_mock_redis_server: boolean indicating whether or not to use a mock Redis
+                connection that simulates talking to a Redis server by storing state internally
 
         Redis Keyword Arguments:
             - host: host of the Redis server
@@ -54,7 +54,7 @@ class RedisBridge(Loggable):
         self._thread = None
         self._server_process = None
 
-        if mock_redis_server:
+        if use_mock_redis_server:
             self._connect_mock()
             return
 

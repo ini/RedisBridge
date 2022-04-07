@@ -18,10 +18,10 @@
 >>> bridge = RedisBridge.RedisBridge(host='localhost', port=6379)
 ```
 
-If we wanted to run locally and were unable to run a Redis server on the machine, we could set the optional `mock_redis_server` argument to `True`:
+If we wanted to run locally and were unable to run a Redis server on the machine, we could set the optional `use_mock_redis_server` argument to `True`:
 
 ```
->>> bridge = RedisBridge.RedisBridge(mock_redis_server=True)
+>>> bridge = RedisBridge.RedisBridge(use_mock_redis_server=True)
 ```
 
 2. Create clients, which need to implement `_receive_redis(message)`
@@ -74,7 +74,7 @@ If we wanted to run locally and were unable to run a Redis server on the machine
 
 **Description:** Bridge class for handling sending / receiving messages via a Redis server.
 
-**Initialization:** `RedisBridge.RedisBridge(name=None, mock_redis_server=False, host='localhost', port=6379, db=0, **redis_kwargs)`
+**Initialization:** `RedisBridge.RedisBridge(name=None, use_mock_redis_server=False, host='localhost', port=6379, db=0, **redis_kwargs)`
 
 [Check here](https://redis-py.readthedocs.io/en/stable/connections.html#redis.Redis) for a full list of optional Redis keyword arguments.
 
