@@ -76,7 +76,7 @@ class Guesser:
 
 if __name__ == '__main__':
 	# Initialize the bridge and the players
-	bridge = RedisBridge(dummy_redis_server=True)
+	bridge = RedisBridge()
 	p1 = Oracle(bridge)
 	p2 = Guesser(bridge)
 

@@ -5,7 +5,6 @@ through a Redis server via RedisBridge.
 A request client sends over an unsorted list,
 and a response client sends back a sorted list.
 """
-import socket
 import time
 from RedisBridge import RedisBridge
 from RedisBridge.messages import Request, Response
@@ -58,10 +57,8 @@ class ResponseClient:
 
 
 if __name__ == '__main__':
-	is_ripley = (socket.gethostname() == 'ripley')
-
 	# Set up bridge and clients
-	bridge = RedisBridge(dummy_redis_server=(not is_ripley))
+	bridge = RedisBridge()
 	request_client = RequestClient(bridge)
 	response_client = ResponseClient(bridge)
 	bridge.start()

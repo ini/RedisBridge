@@ -1,4 +1,14 @@
 import logging
+import socket
+
+
+
+def check_server(host, port):
+    """
+    Try to connect to the given host at the given port and return TCP error code.
+    """
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    return s.connect_ex((host, port))
 
 
 
