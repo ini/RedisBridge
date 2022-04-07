@@ -28,7 +28,6 @@ class CallbackInterface(RedisInterface):
             - bridge: a RedisBridge or RedisInterface instance
         """
         super().__init__(bridge)
-        self._bridge = bridge
         self._message_processors = defaultdict(list)
 
 
@@ -71,7 +70,7 @@ class CallbackInterface(RedisInterface):
             self._message_processors[channel, message_type].append(callback)
 
             # Register with the bridge to receive this message
-            self._bridge.register(self, channel)
+            self._unwrapped.register(self, channel)
 
 
     def deregister_callback(self, callback, channel=None, message_type=None):
@@ -101,7 +100,7 @@ class CallbackInterface(RedisInterface):
             del self._message_processors[c, mt]
             if len(self._get_processors(c)) == 0:
                 self.logger.info(f"{self}:  Deregistering from channel '{c}' -- no registered callbacks")
-                self._bridge.deregister(self, channel=c)
+                self._unwrapped.deregister(self, channel=c)
 
 
     def send(self, data, channel):
@@ -112,7 +111,7 @@ class CallbackInterface(RedisInterface):
             - data: the message data to be published
             - channel: the channel on which to publish the message
         """
-        return self._bridge.send(data, channel)
+        return self._unwrapped.send(data, channel)
 
 
     def request(self, data, channel, blocking=True, timeout=None):
@@ -126,7 +125,7 @@ class CallbackInterface(RedisInterface):
                 or to return the request ID immediately
             - timeout: number of seconds to wait for a response
         """
-        return self._bridge.request(
+        return self._unwrapped.request(
             data, channel, blocking=blocking, timeout=timeout)
 
 
@@ -140,7 +139,7 @@ class CallbackInterface(RedisInterface):
             - channel: the channel on which to publish the response
             - request_id: the ID of the message being responded to
         """
-        return self._bridge.respond(data, channel, request_id)
+        return self._unwrapped.respond(data, channel, request_id)
 
 
     def _receive_redis(self, message):
