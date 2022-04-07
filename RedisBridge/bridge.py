@@ -67,7 +67,7 @@ class RedisBridge(Loggable):
             port = redis_kwargs.get('port', 6379)
             self.logger.warning(f"{self}:  Attempting to spin up Redis server at localhost:{port}")
             try:
-                self._server_process = subprocess.Popen(['rredis-server', '--port', str(port)])
+                self._server_process = subprocess.Popen(['redis-server', '--port', str(port)])
 
                 # Wait for local Redis server
                 timeout = 2.0
