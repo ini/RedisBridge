@@ -9,21 +9,16 @@ RedisBridge is a Python package that handles sending and receiving messages acro
 pip install RedisBridge
 ```
 
-## Server
+## Requirements
 
-This package does **NOT** actually require running a Redis server. As long as you are only running one RedisBridge instance on a single process, the bridge is able to simulate a server by storing state internally ([see docs](./docs/bridge.md)).
+* RedisBridge is intended to connect to a Redis server. To install and run Redis, [see the instructions here](https://redis.io/topics/quickstart).
+* RedisBridge supports Python 3.6 or later.
 
-However, for high-performance applications, one may want to spin up an actual Redis server. See [Redis's quickstart](https://redis.io/topics/quickstart) for installation instructions.
-
-## Docs
-
-For much more detail about RedisBridge classes, messages, and usage patterns, [check out the documentation](./docs/). Seriously, go take a look.
-
-## Basic Usage
+## Getting Started
 
 1) Spin up a Redis server
 ```
-$ redis-server --port 6379
+$ redis-server --port 6379 &
 ```
 
 2) Create a bridge on each client
@@ -32,13 +27,12 @@ $ redis-server --port 6379
 >>> bridge = RedisBridge(host='localhost', port=6379)
 ```
 
-3) Register clients to receive messages on a given channel through a `CallbackInterface`
+3) Register callbacks to receive messages
 ```
 >>> def callback(msg):
 ...     print('Received message:', msg)
 
->>> from RedisBridge.interfaces import CallbackInterface
->>> CallbackInterface(bridge).register_callback(callback, channel='my_channel')
+>>> bridge.register_callback(callback, 'my_channel')
 ```
 
 4) Start each bridge to begin sending/receiving messages
@@ -48,10 +42,10 @@ $ redis-server --port 6379
 
 5. Send messages to other clients via bridge
 ```
->>> bridge.send('Hello World!', channel='my_channel')
+>>> bridge.send('Hello World!', 'my_channel')
 ```
 
-`CallbackInterface` calls all callbacks registered with it on the given channel
+Each bridge calls all callbacks registered with it on the given channel
 ```
 Received message: <Message: id='t2yedxi3', channel='my_channel', data='Hello World!'>
 ```
@@ -60,6 +54,10 @@ Received message: <Message: id='t2yedxi3', channel='my_channel', data='Hello Wor
 ```
 >>> bridge.stop()
 ```
+
+## Docs
+
+For much more detail about RedisBridge classes, messages, and usage patterns, [check out the documentation](./docs/). Seriously, go take a look.
 
 ## Demos
 

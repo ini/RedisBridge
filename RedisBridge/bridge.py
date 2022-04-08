@@ -5,10 +5,11 @@ import redis
 import subprocess
 import time
 
+from collections import defaultdict
+
+from .interfaces import CallbackInterface
 from .messages import decode, Message, Request, Response
 from .utils import Loggable, check_server
-
-from collections import defaultdict
 
 
 
@@ -23,6 +24,8 @@ class RedisBridge(Loggable):
         - subscribe(channel)
         - register(observer, channel)
         - deregister(observer, channel=None)
+        - register_callback(callback, channel, message_type=None)
+        - deregister_callback(callback, channel=None, message_type=None)
         - start(sleep_time=0)
         - stop(timeout=None)
         - send(data, channel)
@@ -53,9 +56,12 @@ class RedisBridge(Loggable):
         self._pubsub = None
         self._thread = None
         self._server_process = None
+        self._callback_interface = CallbackInterface(self)
 
+        # If indicated, use mock Redis server
         if use_mock_redis_server:
             self._connect_mock()
+            atexit.register(self._cleanup)
             return
 
         # Try to connect to given host & port
@@ -90,7 +96,7 @@ class RedisBridge(Loggable):
             self._connect_mock()
 
         # Stop bridge on program termination
-        atexit.register(self.stop)
+        atexit.register(self._cleanup)
 
 
     def __str__(self):
@@ -163,6 +169,26 @@ class RedisBridge(Loggable):
                 self._pubsub.unsubscribe(c)
 
 
+    def register_callback(self, *args, **kwargs):
+        """
+        Register a callback to be triggered when message of a given type
+        is received on a given channel.
+
+        See `RedisBridge.interfaces.CallbackInterface.register_callback()`.
+        """
+        self._callback_interface.register_callback(*args, **kwargs)
+
+
+    def deregister_callback(self, *args, **kwargs):
+        """
+        Deregister the callback as a message handler for the
+        given channel and message type.
+
+        See `RedisBridge.interfaces.CallbackInterface.deregister_callback()`.
+        """
+        self._callback_interface.deregister_callback(*args, **kwargs)
+
+
     def start(self, sleep_time=0):
         """
         Start receiving messages from the Redis connection
@@ -178,7 +204,7 @@ class RedisBridge(Loggable):
         # Start the bridge
         self.logger.info(f"{self}:  Starting callback loop with RedisBridge")
         self._connection.flushdb()
-        if self._thread:
+        if self._thread and self._thread.is_alive():
             self.logger.warning(f"{self}:  Attempting to start RedisBridge that is already running")
         else:
             self._thread = self._pubsub.run_in_thread(sleep_time=sleep_time)
@@ -203,9 +229,6 @@ class RedisBridge(Loggable):
 
         if self._connection:
             self._connection.flushdb()
-
-        if self._server_process:
-            self._server_process.terminate()
 
 
     def send(self, data, channel):
@@ -275,6 +298,15 @@ class RedisBridge(Loggable):
         self._connection.publish(channel, msg._encode())
 
 
+    def _cleanup(self):
+        """
+        Clean up any connection to the Redis server.
+        """
+        self.stop()
+        if self._server_process:
+            self._server_process.terminate()
+
+
     def _connect(self, **kwargs):
         """
         Create and configure connection to Redis server.
@@ -288,11 +320,8 @@ class RedisBridge(Loggable):
             self._connection.ping()
 
             # Set client pubsub hard / soft output buffer limits
-            # 1 GB hard limit, 256 MB per 60 seconds soft limit
-            self._connection.config_set(
-                'client-output-buffer-limit',
-                f'normal 0 0 0 slave 268435456 67108864 60 pubsub 1GB 256MB 60',
-            )
+            # 1 GB hard limit, 64 MB per 60 seconds soft limit
+            self._connection.config_set('client-output-buffer-limit', f'pubsub {2**30} {2**26} 60')
 
             self.logger.info(f"{self}:  Connected to Redis at {host}:{port}, database {db}")
             self._pubsub = self._connection.pubsub(ignore_subscribe_messages=True)
