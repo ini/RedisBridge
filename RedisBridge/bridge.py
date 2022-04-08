@@ -204,7 +204,7 @@ class RedisBridge(Loggable):
         # Start the bridge
         self.logger.info(f"{self}:  Starting callback loop with RedisBridge")
         self._connection.flushdb()
-        if self._thread:
+        if self._thread and self._thread.is_alive():
             self.logger.warning(f"{self}:  Attempting to start RedisBridge that is already running")
         else:
             self._thread = self._pubsub.run_in_thread(sleep_time=sleep_time)
