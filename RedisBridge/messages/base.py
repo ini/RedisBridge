@@ -1,17 +1,8 @@
 import codecs
 import json
 import pickle
-import random
-import string
 
-
-
-def uid(length=8):
-    """
-    Returns a unique string identifier.
-    """
-    alphabet = string.ascii_lowercase + string.digits
-    return ''.join(random.choices(alphabet, k=length))
+from ..utils import uid
 
 
 
