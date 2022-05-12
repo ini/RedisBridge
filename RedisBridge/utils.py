@@ -1,5 +1,7 @@
 import logging
+import random
 import socket
+import string
 
 
 
@@ -9,6 +11,14 @@ def check_server(host, port):
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     return s.connect_ex((host, port))
+
+
+def uid(length=8):
+    """
+    Returns a unique string identifier.
+    """
+    alphabet = string.ascii_lowercase + string.digits
+    return ''.join(random.choices(alphabet, k=length))
 
 
 

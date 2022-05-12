@@ -108,7 +108,7 @@ To see the full example in action, check out [demos/pow.py](../demos/pow.py).
 
 **Description:** Bridge class for handling sending / receiving messages via a Redis server.
 
-**Initialization:** `RedisBridge.RedisBridge(name=None, use_mock_redis_server=False, host='localhost', port=6379, db=0, **redis_kwargs)`
+**Initialization:** `RedisBridge.RedisBridge(name=None, connect_on_creation=True, use_mock_redis_server=False, host='localhost', port=6379, db=0, **redis_kwargs)`
 
 [Check here](https://redis-py.readthedocs.io/en/stable/connections.html#redis.Redis) for a full list of optional Redis keyword arguments.
 
@@ -118,7 +118,11 @@ To see the full example in action, check out [demos/pow.py](../demos/pow.py).
 
 ### Methods
 
-- `subscribe(channel)` - Subscribe to messages from a specific channel.
+- `connect(**redis_kwargs)` - Connect to the Redis server. [See here](https://redis-py.readthedocs.io/en/stable/connections.html#redis.Redis) for a full list of keyword arguments.
+
+- `subscribe(*channels)` - Subscribe to messages from one or more channels.
+
+- `unsubscribe(*channels)` - Unsubscribe from the specified channels. If none are provided, unsubscribe from all channels.
 
 - `register(observer, channel)` - Register an observer object to receive messages of a specific channel. When messages of the given channel are received, the bridge calls `observer._receive_redis(message)`.
 
