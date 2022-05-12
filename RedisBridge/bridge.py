@@ -297,6 +297,11 @@ class RedisBridge(Loggable):
 
         # If blocking, wait for a response
         try:
+            # Subscribe to channel
+            if channel.encode() not in self._pubsub.channels.items():
+                self.subscribe(channel)
+
+            # Get response
             response = self._responses[msg.id].get(timeout=timeout)
             return response
 
